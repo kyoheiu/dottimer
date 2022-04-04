@@ -1,3 +1,5 @@
+use crate::functions::{to_human, to_normalized, to_timer};
+
 use super::errors::MyError;
 use super::functions::input_to_numvec;
 use super::messages::KINDS_OF_TIMER;
@@ -14,6 +16,19 @@ pub fn run() -> Result<(), MyError> {
     let mut state = State::new();
     let mut stdout = stdout().into_raw_mode().unwrap();
     print!("{}", cursor::Hide);
+
+    stdout.suspend_raw_mode()?;
+    print!("description > {}", cursor::Show);
+    stdout.flush()?;
+
+    let mut buffer = String::new();
+    let stdin_ontype = std::io::stdin();
+    stdin_ontype.read_line(&mut buffer)?;
+    state.desciprtion = buffer.trim().to_string();
+
+    print!("{}", cursor::Hide);
+    stdout.activate_raw_mode()?;
+    println!();
 
     let (_, y) = stdout.cursor_pos()?;
     let mut i = y;
@@ -91,17 +106,21 @@ pub fn run() -> Result<(), MyError> {
                 "5 OnUnitInactiveSec: Relative to when the unit is activating was last deactivated."
             );
             print!("{}", cursor::Left(100));
+
+            stdout.suspend_raw_mode()?;
             print!("> {}", cursor::Show);
             stdout.flush()?;
 
-            stdout.suspend_raw_mode()?;
             let mut buffer = String::new();
             let stdin_ontype = std::io::stdin();
             stdin_ontype.read_line(&mut buffer)?;
             let chosen = input_to_numvec(buffer)?;
 
             let mut monotonic_vec: Vec<(MonotonicKind, String)> = vec![];
+            let mut timespan = String::new();
+
             for i in chosen {
+                stdout.suspend_raw_mode()?;
                 match i {
                     1 => print!("OnActiveSec > "),
                     2 => print!("OnBootSec > "),
@@ -114,26 +133,142 @@ pub fn run() -> Result<(), MyError> {
                 let mut buffer = String::new();
                 let stdin_monotonic_timer = std::io::stdin();
                 stdin_monotonic_timer.read_line(&mut buffer)?;
+                let trimmed = buffer.trim();
                 let output = std::process::Command::new("systemd-analyze")
-                    .args(["timespan", &buffer])
-                    .output()?;
-                let output = std::str::from_utf8(&output.stdout)?;
+                    .args(["timespan", trimmed])
+                    .output()?
+                    .stdout;
+                let output = std::str::from_utf8(&output)?.to_string();
+                timespan = output.clone();
+
                 print!("{output}");
+                print!("Is this OK? [Y/n] ");
                 stdout.flush()?;
+                stdout.activate_raw_mode()?;
+
+                loop {
+                    let input = stdin.next();
+                    if let Some(Ok(input)) = input {
+                        match input {
+                            Key::Char('\n') => {
+                                print!("{}", cursor::Left(100));
+                                println!();
+                                break;
+                            }
+                            _ => {
+                                print!("{}", cursor::Left(100));
+                                println!();
+                                stdout.suspend_raw_mode()?;
+                                match i {
+                                    1 => print!("OnActiveSec > "),
+                                    2 => print!("OnBootSec > "),
+                                    3 => print!("OnStartupSec > "),
+                                    4 => print!("OnUnitActiveSec > "),
+                                    5 => print!("OnUnitInactiveSec > "),
+                                    _ => continue,
+                                }
+                                stdout.flush()?;
+                                let mut buffer = String::new();
+                                let stdin_monotonic_timer = std::io::stdin();
+                                stdin_monotonic_timer.read_line(&mut buffer)?;
+                                let output = std::process::Command::new("systemd-analyze")
+                                    .args(["timespan", &buffer])
+                                    .output()?
+                                    .stdout;
+                                let output = std::str::from_utf8(&output)?.to_string();
+                                timespan = output.clone();
+
+                                print!("{output}");
+                                print!("Is this OK? [Y/n] ");
+                                stdout.flush()?;
+                                stdout.activate_raw_mode()?;
+                            }
+                        }
+                    }
+                }
+
                 match i {
-                    1 => monotonic_vec.push((MonotonicKind::OnActive, buffer)),
-                    2 => monotonic_vec.push((MonotonicKind::OnBoot, buffer)),
-                    3 => monotonic_vec.push((MonotonicKind::OnStartup, buffer)),
-                    4 => monotonic_vec.push((MonotonicKind::OnUnitActive, buffer)),
-                    5 => monotonic_vec.push((MonotonicKind::OnUnitInactive, buffer)),
+                    1 => monotonic_vec.push((MonotonicKind::OnActive, to_human(timespan))),
+                    2 => monotonic_vec.push((MonotonicKind::OnBoot, to_human(timespan))),
+                    3 => monotonic_vec.push((MonotonicKind::OnStartup, to_human(timespan))),
+                    4 => monotonic_vec.push((MonotonicKind::OnUnitActive, to_human(timespan))),
+                    5 => monotonic_vec.push((MonotonicKind::OnUnitInactive, to_human(timespan))),
                     _ => continue,
                 }
             }
-            println!("{:?}", monotonic_vec);
             stdout.activate_raw_mode()?;
+            state.monotonic_kind = Some(monotonic_vec);
         }
-        Kind::Realtime => {}
+
+        Kind::Realtime => {
+            print!("Enter the time spec > ");
+
+            stdout.suspend_raw_mode()?;
+            print!("{}", cursor::Show);
+            stdout.flush()?;
+
+            let mut timespec = String::new();
+            let mut buffer = String::new();
+            let stdin_calender = std::io::stdin();
+            stdin_calender.read_line(&mut buffer)?;
+            let trimmed = buffer.trim();
+            let output = std::process::Command::new("systemd-analyze")
+                .args(["calendar", trimmed])
+                .output()?
+                .stdout;
+            let output = std::str::from_utf8(&output)?.to_string();
+            timespec = output.clone();
+
+            print!("{output}");
+            print!("Is this OK? [Y/n] ");
+            stdout.flush()?;
+            stdout.activate_raw_mode()?;
+
+            loop {
+                let input = stdin.next();
+                if let Some(Ok(input)) = input {
+                    match input {
+                        Key::Char('\n') => {
+                            print!("{}", cursor::Left(100));
+                            println!();
+                            break;
+                        }
+                        _ => {
+                            print!("{}", cursor::Left(100));
+                            println!();
+                            print!("Enter the time spec > ");
+
+                            stdout.suspend_raw_mode()?;
+                            print!("{}", cursor::Show);
+                            stdout.flush()?;
+
+                            let mut buffer = String::new();
+                            let stdin_calender = std::io::stdin();
+                            stdin_calender.read_line(&mut buffer)?;
+                            let trimmed = buffer.trim();
+                            let output = std::process::Command::new("systemd-analyze")
+                                .args(["calendar", trimmed])
+                                .output()?
+                                .stdout;
+                            let output = std::str::from_utf8(&output)?.to_string();
+                            timespec = output.clone();
+
+                            print!("{output}");
+                            print!("Is this OK? [Y/n] ");
+                            stdout.flush()?;
+                            stdout.activate_raw_mode()?;
+                        }
+                    }
+                }
+            }
+
+            state.calendar = Some(to_normalized(timespec));
+        }
     }
+    stdout.suspend_raw_mode();
+    println!();
+    println!("RESULT:");
+    println!("{}", to_timer(state));
     print!("{}", cursor::Show);
     Ok(())
 }
