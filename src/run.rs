@@ -263,7 +263,19 @@ pub fn run() -> Result<(), MyError> {
                 print!("{}", Fg(Reset));
                 let mut buffer = String::new();
                 stdin.read_line(&mut buffer)?;
-                format.year = to_year(buffer)?;
+                let mut parsed = to_year(buffer.clone());
+                loop {
+                    if parsed.is_err() {
+                        println!("Parse error. Enter again > ");
+                        let mut buffer = String::new();
+                        stdin.read_line(&mut buffer)?;
+                        parsed = to_year(buffer);
+                        continue;
+                    } else {
+                        break;
+                    }
+                }
+                format.year = parsed?;
 
                 print!("{}", Fg(Yellow));
                 println!("3. Month:");
@@ -362,8 +374,8 @@ pub fn run() -> Result<(), MyError> {
     }
     stdout.suspend_raw_mode()?;
     println!();
-    println!("RESULT:");
     print!("{}", Fg(Magenta));
+    println!("RESULT:");
     println!("++++++++++++++++++++");
     println!("{}", to_timer(state));
     println!("++++++++++++++++++++");
