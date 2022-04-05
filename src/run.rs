@@ -4,9 +4,9 @@ use super::errors::MyError;
 use super::functions::input_to_numvec;
 use super::messages::KINDS_OF_TIMER;
 use super::state::*;
+use std::io::stdout;
 use std::io::Write;
-use std::io::{stdin, stdout};
-use termion::clear::CurrentLine;
+use termion::color::*;
 use termion::cursor::{self, DetectCursorPos};
 use termion::event::Key;
 use termion::input::TermRead;
@@ -18,12 +18,12 @@ pub fn run() -> Result<(), MyError> {
     print!("{}", cursor::Hide);
 
     stdout.suspend_raw_mode()?;
-    print!("description > {}", cursor::Show);
+    print!("{}description > {}{}", Fg(Yellow), cursor::Show, Fg(Reset));
     stdout.flush()?;
 
     let mut buffer = String::new();
-    let stdin_ontype = std::io::stdin();
-    stdin_ontype.read_line(&mut buffer)?;
+    let stdin = std::io::stdin();
+    stdin.read_line(&mut buffer)?;
     state.desciprtion = buffer.trim().to_string();
 
     print!("{}", cursor::Hide);
@@ -32,42 +32,43 @@ pub fn run() -> Result<(), MyError> {
 
     let (_, y) = stdout.cursor_pos()?;
     let mut i = y;
+    print!("{}", Fg(Blue));
     for line in KINDS_OF_TIMER.lines() {
         println!("{}{}", line, cursor::Goto(1, i));
         i += 1;
     }
+    print!("{}", Fg(Reset));
 
+    print!("{}", Fg(Yellow));
     println!("Which kind of timer do you want?");
+    print!("{}", Fg(Reset));
     print!("{}", cursor::Left(33));
 
-    let mut stdin = stdin().keys();
+    let mut keys = std::io::stdin().keys();
     let mut kind = Kind::Monotonic;
     println!("> Monotonic");
     print!("{}", cursor::Left(12));
     print!("  Realtime");
-    print!("{}", cursor::Left(12));
+    print!("{}{}", cursor::Left(12), cursor::Up(1));
     stdout.flush()?;
 
     loop {
-        let input = stdin.next();
+        let input = keys.next();
         if let Some(Ok(input)) = input {
             match input {
                 Key::Up | Key::Down => match kind {
                     Kind::Monotonic => {
                         kind = Kind::Realtime;
-                        print!("{}{}{}", CurrentLine, cursor::Up(1), CurrentLine);
-                        println!("  Monotonic");
-                        print!("{}", cursor::Left(12));
-                        print!("> Realtime");
-                        print!("{}", cursor::Left(12));
+                        print!(
+                            " {}{}>{}",
+                            cursor::Left(1),
+                            cursor::Down(1),
+                            cursor::Left(1)
+                        );
                     }
                     Kind::Realtime => {
                         kind = Kind::Monotonic;
-                        print!("{}{}{}", CurrentLine, cursor::Up(1), CurrentLine);
-                        println!("> Monotonic");
-                        print!("{}", cursor::Left(12));
-                        print!("  Realtime");
-                        print!("{}", cursor::Left(12));
+                        print!(" {}{}>{}", cursor::Left(1), cursor::Up(1), cursor::Left(1));
                     }
                 },
                 Key::Char('\n') => {
@@ -90,30 +91,32 @@ pub fn run() -> Result<(), MyError> {
 
     match state.timer_kind {
         Kind::Monotonic => {
-            println!("Choose kinds of Monotonic timer(i.e. 1 | 2 3 4):");
+            print!("{}", Fg(Yellow));
+            println!("Choose kinds of Monotonic timer(i.e. \"1\" or \"2 3 4\"):");
+            print!("{}", Fg(Blue));
             print!("{}", cursor::Left(100));
-            println!("1 OnActiveSec: relative to the mooment the timer unit is activated.");
+            println!("1) OnActiveSec: relative to the mooment the timer unit is activated.");
             print!("{}", cursor::Left(100));
-            println!("2 OnBootSec: Relative to when the machines was booted up.");
+            println!("2) OnBootSec: Relative to when the machines was booted up.");
             print!("{}", cursor::Left(100));
-            println!("3 OnStartupSec: Relative to when the service manager was first started.");
+            println!("3) OnStartupSec: Relative to when the service manager was first started.");
             print!("{}", cursor::Left(100));
             println!(
-                "4 OnUnitActiveSec: Relative to when the unit is activating was last activated."
+                "4) OnUnitActiveSec: Relative to when the unit is activating was last activated."
             );
             print!("{}", cursor::Left(100));
             println!(
-                "5 OnUnitInactiveSec: Relative to when the unit is activating was last deactivated."
+                "5) OnUnitInactiveSec: Relative to when the unit is activating was last deactivated."
             );
             print!("{}", cursor::Left(100));
+            print!("{}", Fg(Reset));
 
             stdout.suspend_raw_mode()?;
             print!("> {}", cursor::Show);
             stdout.flush()?;
 
             let mut buffer = String::new();
-            let stdin_ontype = std::io::stdin();
-            stdin_ontype.read_line(&mut buffer)?;
+            stdin.read_line(&mut buffer)?;
             let chosen = input_to_numvec(buffer)?;
 
             let mut monotonic_vec: Vec<(MonotonicKind, String)> = vec![];
@@ -121,6 +124,7 @@ pub fn run() -> Result<(), MyError> {
 
             for i in chosen {
                 stdout.suspend_raw_mode()?;
+                print!("{}", Fg(Yellow));
                 match i {
                     1 => print!("OnActiveSec > "),
                     2 => print!("OnBootSec > "),
@@ -129,25 +133,27 @@ pub fn run() -> Result<(), MyError> {
                     5 => print!("OnUnitInactiveSec > "),
                     _ => continue,
                 }
+                print!("{}", Fg(Reset));
                 stdout.flush()?;
                 let mut buffer = String::new();
-                let stdin_monotonic_timer = std::io::stdin();
-                stdin_monotonic_timer.read_line(&mut buffer)?;
+                stdin.read_line(&mut buffer)?;
                 let trimmed = buffer.trim();
                 let output = std::process::Command::new("systemd-analyze")
                     .args(["timespan", trimmed])
                     .output()?
                     .stdout;
                 let output = std::str::from_utf8(&output)?.to_string();
-                timespan = output.clone();
+                let mut timespan = output.clone();
 
+                print!("{}", Fg(Green));
                 print!("{output}");
-                print!("Is this OK? [Y/n] ");
+                print!("{}", Fg(Reset));
+                print!("OK? [Y/n] ");
                 stdout.flush()?;
                 stdout.activate_raw_mode()?;
 
                 loop {
-                    let input = stdin.next();
+                    let input = keys.next();
                     if let Some(Ok(input)) = input {
                         match input {
                             Key::Char('\n') => {
@@ -159,6 +165,7 @@ pub fn run() -> Result<(), MyError> {
                                 print!("{}", cursor::Left(100));
                                 println!();
                                 stdout.suspend_raw_mode()?;
+                                print!("{}", Fg(Yellow));
                                 match i {
                                     1 => print!("OnActiveSec > "),
                                     2 => print!("OnBootSec > "),
@@ -167,10 +174,10 @@ pub fn run() -> Result<(), MyError> {
                                     5 => print!("OnUnitInactiveSec > "),
                                     _ => continue,
                                 }
+                                print!("{}", Fg(Reset));
                                 stdout.flush()?;
                                 let mut buffer = String::new();
-                                let stdin_monotonic_timer = std::io::stdin();
-                                stdin_monotonic_timer.read_line(&mut buffer)?;
+                                stdin.read_line(&mut buffer)?;
                                 let output = std::process::Command::new("systemd-analyze")
                                     .args(["timespan", &buffer])
                                     .output()?
@@ -178,8 +185,10 @@ pub fn run() -> Result<(), MyError> {
                                 let output = std::str::from_utf8(&output)?.to_string();
                                 timespan = output.clone();
 
+                                print!("{}", Fg(Green));
                                 print!("{output}");
-                                print!("Is this OK? [Y/n] ");
+                                print!("{}", Fg(Reset));
+                                print!("OK? [Y/n] ");
                                 stdout.flush()?;
                                 stdout.activate_raw_mode()?;
                             }
@@ -201,13 +210,17 @@ pub fn run() -> Result<(), MyError> {
         }
 
         Kind::Realtime => {
+            print!("{}", cursor::Show);
+
+            print!("{}", Fg(Yellow));
             println!("Do you want the interactive input for time spec? [y/N]");
             print!("{}", cursor::Left(100));
+            print!("{}", Fg(Reset));
             stdout.flush()?;
 
             let mut is_interactive = false;
             loop {
-                let input = stdin.next();
+                let input = keys.next();
                 if let Some(Ok(input)) = input {
                     match input {
                         Key::Char('Y') | Key::Char('y') => {
@@ -221,6 +234,8 @@ pub fn run() -> Result<(), MyError> {
                 }
             }
 
+            println!();
+
             if is_interactive {
                 let mut format = Format {
                     dow: vec![],
@@ -232,45 +247,47 @@ pub fn run() -> Result<(), MyError> {
 
                 stdout.suspend_raw_mode()?;
                 print!("{}", cursor::Show);
+
+                print!("{}", Fg(Yellow));
                 println!("1. the Day of Week:");
                 println!("[Mon, Tue, Wed, Thu, Fri, Sat, Sun]");
-                println!("Enter one or more of the day you want, with whitespace split:");
+                println!("Enter the days you want (i.e. \"Mon, Wed\") default: None");
+                print!("{}", Fg(Reset));
                 let mut buffer = String::new();
-                let stdin_dow = std::io::stdin();
-                stdin_dow.read_line(&mut buffer)?;
+                stdin.read_line(&mut buffer)?;
                 format.dow = to_dow(buffer);
 
+                print!("{}", Fg(Yellow));
                 println!("2. Year:");
-                println!("Enter one or more year (i.e. \"2022\", \"2023..2025\", or \"2024 2025 2028..2030\") default: *");
+                println!("Enter year (i.e. \"2022\", \"2023..2025\", or \"2024 2025 2028..2030\") default: *");
+                print!("{}", Fg(Reset));
                 let mut buffer = String::new();
-                let stdin_year = std::io::stdin();
-                stdin_year.read_line(&mut buffer)?;
+                stdin.read_line(&mut buffer)?;
                 format.year = to_year(buffer)?;
 
+                print!("{}", Fg(Yellow));
                 println!("3. Month:");
-                println!(
-                    "Enter one or more month (i.e. \"1\", \"3..5\", or \"2 4 6..11\") default: *"
-                );
+                println!("Enter month (i.e. \"1\", \"3..5\", or \"2 4 6..11\") default: *");
+                print!("{}", Fg(Reset));
                 let mut buffer = String::new();
-                let stdin_month = std::io::stdin();
-                stdin_month.read_line(&mut buffer)?;
+                stdin.read_line(&mut buffer)?;
                 format.month = to_monthday(buffer)?;
 
+                print!("{}", Fg(Yellow));
                 println!("4. Day:");
-                println!("Enter one or more day (i.e. \"2\", \"13..15\", or \"20 24 26..28\") default: *");
+                println!("Enter day (i.e. \"2\", \"13..15\", or \"20 24 26..28\") default: *");
+                print!("{}", Fg(Reset));
                 let mut buffer = String::new();
-                let stdin_day = std::io::stdin();
-                stdin_day.read_line(&mut buffer)?;
+                stdin.read_line(&mut buffer)?;
                 format.day = to_monthday(buffer)?;
 
+                print!("{}", Fg(Yellow));
                 println!("5. Time:");
                 println!("Enter time (i.e. \"12:00:00\") default: 00:00:00");
+                print!("{}", Fg(Reset));
                 let mut buffer = String::new();
-                let stdin_time = std::io::stdin();
-                stdin_time.read_line(&mut buffer)?;
+                stdin.read_line(&mut buffer)?;
                 format.time = to_time(buffer).unwrap();
-
-                print!("{:?}", format);
 
                 let formatted = format_to_calendar(format);
                 let output = std::process::Command::new("systemd-analyze")
@@ -282,31 +299,28 @@ pub fn run() -> Result<(), MyError> {
                     state.calendar = Some(to_normalized(output));
                 }
             } else {
-                print!("Enter the time spec > ");
-
                 stdout.suspend_raw_mode()?;
                 print!("{}", cursor::Show);
+                print!("Enter the time spec > ");
+
                 stdout.flush()?;
 
                 let mut timespec = String::new();
                 let mut buffer = String::new();
-                let stdin_calender = std::io::stdin();
-                stdin_calender.read_line(&mut buffer)?;
+                stdin.read_line(&mut buffer)?;
                 let trimmed = buffer.trim();
                 let output = std::process::Command::new("systemd-analyze")
                     .args(["calendar", trimmed])
                     .output()?
                     .stdout;
                 let output = std::str::from_utf8(&output)?.to_string();
-                timespec = output.clone();
+                timespec = output;
 
-                print!("{output}");
-                print!("Is this OK? [Y/n] ");
                 stdout.flush()?;
                 stdout.activate_raw_mode()?;
 
                 loop {
-                    let input = stdin.next();
+                    let input = keys.next();
                     if let Some(Ok(input)) = input {
                         match input {
                             Key::Char('\n') => {
@@ -324,8 +338,7 @@ pub fn run() -> Result<(), MyError> {
                                 stdout.flush()?;
 
                                 let mut buffer = String::new();
-                                let stdin_calender = std::io::stdin();
-                                stdin_calender.read_line(&mut buffer)?;
+                                stdin.read_line(&mut buffer)?;
                                 let trimmed = buffer.trim();
                                 let output = std::process::Command::new("systemd-analyze")
                                     .args(["calendar", trimmed])
@@ -335,7 +348,7 @@ pub fn run() -> Result<(), MyError> {
                                 timespec = output.clone();
 
                                 print!("{output}");
-                                print!("Is this OK? [Y/n] ");
+                                print!("OK? [Y/n] ");
                                 stdout.flush()?;
                                 stdout.activate_raw_mode()?;
                             }
@@ -347,10 +360,14 @@ pub fn run() -> Result<(), MyError> {
             }
         }
     }
-    stdout.suspend_raw_mode();
+    stdout.suspend_raw_mode()?;
     println!();
     println!("RESULT:");
+    print!("{}", Fg(Magenta));
+    println!("++++++++++++++++++++");
     println!("{}", to_timer(state));
+    println!("++++++++++++++++++++");
+    print!("{}", Fg(Reset));
     print!("{}", cursor::Show);
     Ok(())
 }

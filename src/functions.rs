@@ -130,7 +130,8 @@ pub fn to_year(input: String) -> Result<Vec<String>, MyError> {
 pub fn to_monthday(input: String) -> Result<Vec<String>, MyError> {
     let mut result = vec![];
     let re = Regex::new(r"^[0-9\.\s]*$")?;
-    let multi_month_re = Regex::new(r"^[0-9]{1,2}\.\.[0-9]{1,2}$")?;
+    let single_md_re = Regex::new(r"^[0-9]{1,2}$")?;
+    let multi_md_re = Regex::new(r"^[0-9]{1,2}\.\.[0-9]{1,2}$")?;
     if !re.is_match(&input) {
         return Err(MyError::ParseInputError {
             msg: "cannot parse input for month or day".to_string(),
@@ -138,15 +139,19 @@ pub fn to_monthday(input: String) -> Result<Vec<String>, MyError> {
     }
     for word in input.split_whitespace() {
         if word.contains('.') {
-            if multi_month_re.is_match(word) {
+            if multi_md_re.is_match(word) {
                 result.push(word.to_string());
             } else {
                 return Err(MyError::ParseInputError {
                     msg: "cannot parse input for month or day".to_string(),
                 });
             }
-        } else {
+        } else if single_md_re.is_match(word) {
             result.push(word.to_string());
+        } else {
+            return Err(MyError::ParseInputError {
+                msg: "cannot parse input for month or day".to_string(),
+            });
         }
     }
     Ok(result)
@@ -338,6 +343,13 @@ WantedBy=timers.target",
     #[should_panic]
     fn test_to_month_fails() {
         let input2 = "3 1..1000";
+        let _result = to_monthday(input2.to_string()).unwrap();
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_to_month_fails2() {
+        let input2 = "2424";
         let _result = to_monthday(input2.to_string()).unwrap();
     }
 
