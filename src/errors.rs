@@ -8,4 +8,8 @@ pub enum MyError {
     ParseError(#[from] std::num::ParseIntError),
     #[error(transparent)]
     Utf8Error(#[from] std::str::Utf8Error),
+    #[error(transparent)]
+    RegexError(#[from] regex::Error),
+    #[error("{msg}")]
+    ParseInputError { msg: String },
 }

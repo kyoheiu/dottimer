@@ -1,4 +1,4 @@
-use crate::functions::{to_human, to_normalized, to_timer};
+use crate::functions::*;
 
 use super::errors::MyError;
 use super::functions::input_to_numvec;
@@ -201,68 +201,118 @@ pub fn run() -> Result<(), MyError> {
         }
 
         Kind::Realtime => {
-            print!("Enter the time spec > ");
-
-            stdout.suspend_raw_mode()?;
-            print!("{}", cursor::Show);
+            println!("Do you want the interactive input for time spec? [y/N]");
+            print!("{}", cursor::Left(100));
             stdout.flush()?;
 
-            let mut timespec = String::new();
-            let mut buffer = String::new();
-            let stdin_calender = std::io::stdin();
-            stdin_calender.read_line(&mut buffer)?;
-            let trimmed = buffer.trim();
-            let output = std::process::Command::new("systemd-analyze")
-                .args(["calendar", trimmed])
-                .output()?
-                .stdout;
-            let output = std::str::from_utf8(&output)?.to_string();
-            timespec = output.clone();
-
-            print!("{output}");
-            print!("Is this OK? [Y/n] ");
-            stdout.flush()?;
-            stdout.activate_raw_mode()?;
-
+            let mut is_interactive = false;
             loop {
                 let input = stdin.next();
                 if let Some(Ok(input)) = input {
                     match input {
-                        Key::Char('\n') => {
-                            print!("{}", cursor::Left(100));
-                            println!();
+                        Key::Char('Y') | Key::Char('y') => {
+                            is_interactive = true;
                             break;
                         }
                         _ => {
-                            print!("{}", cursor::Left(100));
-                            println!();
-                            print!("Enter the time spec > ");
-
-                            stdout.suspend_raw_mode()?;
-                            print!("{}", cursor::Show);
-                            stdout.flush()?;
-
-                            let mut buffer = String::new();
-                            let stdin_calender = std::io::stdin();
-                            stdin_calender.read_line(&mut buffer)?;
-                            let trimmed = buffer.trim();
-                            let output = std::process::Command::new("systemd-analyze")
-                                .args(["calendar", trimmed])
-                                .output()?
-                                .stdout;
-                            let output = std::str::from_utf8(&output)?.to_string();
-                            timespec = output.clone();
-
-                            print!("{output}");
-                            print!("Is this OK? [Y/n] ");
-                            stdout.flush()?;
-                            stdout.activate_raw_mode()?;
+                            break;
                         }
                     }
                 }
             }
 
-            state.calendar = Some(to_normalized(timespec));
+            if is_interactive {
+                let mut format = Format {
+                    dow: vec![],
+                    year: vec![],
+                    month: vec![],
+                    day: vec![],
+                    time: None,
+                };
+
+                stdout.suspend_raw_mode()?;
+                print!("{}", cursor::Show);
+                println!("1. the Day of Week:");
+                println!("[Mon, Tue, Wed, Thu, Fri, Sat, Sun]");
+                println!("Enter one or more of the day you want, with whitespace split:");
+                let mut buffer = String::new();
+                let stdin_dow = std::io::stdin();
+                stdin_dow.read_line(&mut buffer)?;
+                format.dow = to_dow(buffer);
+
+                println!("2. Year:");
+                println!("Enter one or more year (i.e. \"2022\", \"2023..2025\", or \"2024 2025 2028..2030\"):");
+                let mut buffer = String::new();
+                let stdin_year = std::io::stdin();
+                stdin_year.read_line(&mut buffer)?;
+                format.dow = to_dow(buffer);
+
+                println!("{:?}", format);
+                return Ok(());
+            } else {
+                print!("Enter the time spec > ");
+
+                stdout.suspend_raw_mode()?;
+                print!("{}", cursor::Show);
+                stdout.flush()?;
+
+                let mut timespec = String::new();
+                let mut buffer = String::new();
+                let stdin_calender = std::io::stdin();
+                stdin_calender.read_line(&mut buffer)?;
+                let trimmed = buffer.trim();
+                let output = std::process::Command::new("systemd-analyze")
+                    .args(["calendar", trimmed])
+                    .output()?
+                    .stdout;
+                let output = std::str::from_utf8(&output)?.to_string();
+                timespec = output.clone();
+
+                print!("{output}");
+                print!("Is this OK? [Y/n] ");
+                stdout.flush()?;
+                stdout.activate_raw_mode()?;
+
+                loop {
+                    let input = stdin.next();
+                    if let Some(Ok(input)) = input {
+                        match input {
+                            Key::Char('\n') => {
+                                print!("{}", cursor::Left(100));
+                                println!();
+                                break;
+                            }
+                            _ => {
+                                print!("{}", cursor::Left(100));
+                                println!();
+                                print!("Enter the time spec > ");
+
+                                stdout.suspend_raw_mode()?;
+                                print!("{}", cursor::Show);
+                                stdout.flush()?;
+
+                                let mut buffer = String::new();
+                                let stdin_calender = std::io::stdin();
+                                stdin_calender.read_line(&mut buffer)?;
+                                let trimmed = buffer.trim();
+                                let output = std::process::Command::new("systemd-analyze")
+                                    .args(["calendar", trimmed])
+                                    .output()?
+                                    .stdout;
+                                let output = std::str::from_utf8(&output)?.to_string();
+                                timespec = output.clone();
+
+                                print!("{output}");
+                                print!("Is this OK? [Y/n] ");
+                                stdout.flush()?;
+                                stdout.activate_raw_mode()?;
+                            }
+                        }
+                    }
+                }
+
+                state.calendar = Some(to_normalized(timespec));
+            }
         }
     }
     stdout.suspend_raw_mode();

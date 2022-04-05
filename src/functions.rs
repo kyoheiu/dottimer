@@ -1,5 +1,6 @@
 use super::errors::MyError;
 use super::state::*;
+use regex::Regex;
 
 pub fn input_to_numvec(s: String) -> Result<Vec<u16>, MyError> {
     let mut result: Vec<u16> = vec![];
@@ -84,6 +85,34 @@ Description="
     result
 }
 
+pub fn to_dow(input: String) -> Vec<DoW> {
+    let mut result = vec![];
+    for words in input.split_whitespace() {
+        match words.to_lowercase().as_str() {
+            "mon" => result.push(DoW::Mon),
+            "tue" => result.push(DoW::Tue),
+            "wed" => result.push(DoW::Wed),
+            "thu" => result.push(DoW::Thu),
+            "fri" => result.push(DoW::Fri),
+            "sat" => result.push(DoW::Sat),
+            "sun" => result.push(DoW::Sun),
+            _ => continue,
+        }
+    }
+    result
+}
+
+pub fn to_year(input: String) -> Result<String, MyError> {
+    let mut result = String::new();
+    let re = Regex::new(r"[1-9\.\s]*")?;
+    if !re.is_match(&input) {
+        return Err(MyError::ParseInputError {
+            msg: "cannot parse input".to_string(),
+        });
+    }
+    Ok(result)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -124,6 +153,7 @@ Normalized form: Mon *-*-* 00:00:00
                 (MonotonicKind::OnBoot, "5min".to_string()),
             ]),
             calendar: None,
+            format: None,
         };
         assert_eq!(
             "[Unit]
@@ -146,6 +176,7 @@ WantedBy=timers.target",
             timer_kind: Kind::Realtime,
             monotonic_kind: None,
             calendar: Some("Mon *-*-* 00:00:00".to_string()),
+            format: None,
         };
         assert_eq!(
             "[Unit]
@@ -158,5 +189,16 @@ OnCalendar=Mon *-*-* 00:00:00
 WantedBy=timers.target",
             to_timer(input)
         );
+    }
+
+    #[test]
+    fn test_to_dow() {
+        let input = "Mon tue FrI Sum";
+        assert_eq!(
+            vec![DoW::Mon, DoW::Tue, DoW::Fri],
+            to_dow(input.to_string())
+        );
+        let input2 = "";
+        assert_eq!(Vec::<DoW>::new(), to_dow(input2.to_string()));
     }
 }
