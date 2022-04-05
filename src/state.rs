@@ -36,20 +36,9 @@ impl State {
 
 #[derive(Debug)]
 pub struct Format {
-    pub dow: Vec<DoW>,
-    pub year: Vec<usize>,
-    pub month: Vec<usize>,
-    pub day: Vec<usize>,
-    pub time: Option<String>,
-}
-
-#[derive(Debug, Eq, PartialEq, Ord, PartialOrd)]
-pub enum DoW {
-    Mon,
-    Tue,
-    Wed,
-    Thu,
-    Fri,
-    Sat,
-    Sun,
+    pub dow: Vec<String>,
+    pub year: Vec<String>,
+    pub month: Vec<String>,
+    pub day: Vec<String>,
+    pub time: String,
 }

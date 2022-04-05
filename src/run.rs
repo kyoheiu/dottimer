@@ -227,7 +227,7 @@ pub fn run() -> Result<(), MyError> {
                     year: vec![],
                     month: vec![],
                     day: vec![],
-                    time: None,
+                    time: "".to_string(),
                 };
 
                 stdout.suspend_raw_mode()?;
@@ -241,14 +241,46 @@ pub fn run() -> Result<(), MyError> {
                 format.dow = to_dow(buffer);
 
                 println!("2. Year:");
-                println!("Enter one or more year (i.e. \"2022\", \"2023..2025\", or \"2024 2025 2028..2030\"):");
+                println!("Enter one or more year (i.e. \"2022\", \"2023..2025\", or \"2024 2025 2028..2030\") default: *");
                 let mut buffer = String::new();
                 let stdin_year = std::io::stdin();
                 stdin_year.read_line(&mut buffer)?;
-                format.dow = to_dow(buffer);
+                format.year = to_year(buffer)?;
 
-                println!("{:?}", format);
-                return Ok(());
+                println!("3. Month:");
+                println!(
+                    "Enter one or more month (i.e. \"1\", \"3..5\", or \"2 4 6..11\") default: *"
+                );
+                let mut buffer = String::new();
+                let stdin_month = std::io::stdin();
+                stdin_month.read_line(&mut buffer)?;
+                format.month = to_monthday(buffer)?;
+
+                println!("4. Day:");
+                println!("Enter one or more day (i.e. \"2\", \"13..15\", or \"20 24 26..28\") default: *");
+                let mut buffer = String::new();
+                let stdin_day = std::io::stdin();
+                stdin_day.read_line(&mut buffer)?;
+                format.day = to_monthday(buffer)?;
+
+                println!("5. Time:");
+                println!("Enter time (i.e. \"12:00:00\") default: 00:00:00");
+                let mut buffer = String::new();
+                let stdin_time = std::io::stdin();
+                stdin_time.read_line(&mut buffer)?;
+                format.time = to_time(buffer).unwrap();
+
+                print!("{:?}", format);
+
+                let formatted = format_to_calendar(format);
+                let output = std::process::Command::new("systemd-analyze")
+                    .args(["calendar", &formatted])
+                    .output()?
+                    .stdout;
+                let output = std::str::from_utf8(&output)?.to_string();
+                if output != *"" {
+                    state.calendar = Some(to_normalized(output));
+                }
             } else {
                 print!("Enter the time spec > ");
 

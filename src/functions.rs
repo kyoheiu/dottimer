@@ -85,32 +85,137 @@ Description="
     result
 }
 
-pub fn to_dow(input: String) -> Vec<DoW> {
+pub fn to_dow(input: String) -> Vec<String> {
     let mut result = vec![];
     for words in input.split_whitespace() {
         match words.to_lowercase().as_str() {
-            "mon" => result.push(DoW::Mon),
-            "tue" => result.push(DoW::Tue),
-            "wed" => result.push(DoW::Wed),
-            "thu" => result.push(DoW::Thu),
-            "fri" => result.push(DoW::Fri),
-            "sat" => result.push(DoW::Sat),
-            "sun" => result.push(DoW::Sun),
+            "mon" => result.push("Mon".to_string()),
+            "tue" => result.push("Tue".to_string()),
+            "wed" => result.push("Wed".to_string()),
+            "thu" => result.push("Thu".to_string()),
+            "fri" => result.push("Fri".to_string()),
+            "sat" => result.push("Sat".to_string()),
+            "sun" => result.push("Sun".to_string()),
             _ => continue,
         }
     }
     result
 }
 
-pub fn to_year(input: String) -> Result<String, MyError> {
-    let mut result = String::new();
-    let re = Regex::new(r"[1-9\.\s]*")?;
+pub fn to_year(input: String) -> Result<Vec<String>, MyError> {
+    let mut result = vec![];
+    let re = Regex::new(r"^[0-9\.\s]*$")?;
+    let multi_year_re = Regex::new(r"^[0-9]+\.\.[0-9]+$")?;
     if !re.is_match(&input) {
         return Err(MyError::ParseInputError {
-            msg: "cannot parse input".to_string(),
+            msg: "cannot parse input for year".to_string(),
         });
     }
+    for word in input.split_whitespace() {
+        if word.contains('.') {
+            if multi_year_re.is_match(word) {
+                result.push(word.to_string());
+            } else {
+                return Err(MyError::ParseInputError {
+                    msg: "cannot parse input for year".to_string(),
+                });
+            }
+        } else {
+            result.push(word.to_string());
+        }
+    }
     Ok(result)
+}
+
+pub fn to_monthday(input: String) -> Result<Vec<String>, MyError> {
+    let mut result = vec![];
+    let re = Regex::new(r"^[0-9\.\s]*$")?;
+    let multi_month_re = Regex::new(r"^[0-9]{1,2}\.\.[0-9]{1,2}$")?;
+    if !re.is_match(&input) {
+        return Err(MyError::ParseInputError {
+            msg: "cannot parse input for month or day".to_string(),
+        });
+    }
+    for word in input.split_whitespace() {
+        if word.contains('.') {
+            if multi_month_re.is_match(word) {
+                result.push(word.to_string());
+            } else {
+                return Err(MyError::ParseInputError {
+                    msg: "cannot parse input for month or day".to_string(),
+                });
+            }
+        } else {
+            result.push(word.to_string());
+        }
+    }
+    Ok(result)
+}
+
+pub fn to_time(input: String) -> Result<String, MyError> {
+    if input.trim().is_empty() {
+        return Ok("00:00:00".to_string());
+    }
+    let re = Regex::new(r"^[0-9]{1,2}:[0-9]{1,2}:[0-9]{1,2}$")?;
+    if !re.is_match(&input) {
+        return Err(MyError::ParseInputError {
+            msg: "cannot parse input for time".to_string(),
+        });
+    }
+    Ok(input)
+}
+
+pub fn format_to_calendar(format: Format) -> String {
+    let mut result = String::new();
+    if !(format.dow.is_empty()) {
+        for x in format.dow {
+            result.push_str(&x);
+            result.push(',')
+        }
+        result.pop();
+        result.push(' ');
+    }
+
+    if !(format.year.is_empty()) {
+        for x in format.year {
+            result.push_str(&x);
+            result.push(',');
+        }
+        result.pop();
+        result.push('-');
+    } else {
+        result.push_str("*-");
+    }
+
+    if !(format.month.is_empty()) {
+        for x in format.month {
+            result.push_str(&x);
+            result.push(',');
+        }
+        result.pop();
+        result.push('-');
+    } else {
+        result.push_str("*-");
+    }
+
+    if !(format.day.is_empty()) {
+        for x in format.day {
+            result.push_str(&x);
+            result.push(',');
+        }
+        result.pop();
+        result.push(' ');
+    } else {
+        result.push_str("* ");
+    }
+
+    if format.time.is_empty() {
+        result.push_str("00:00:00");
+    } else {
+        result.push_str(&format.time);
+    }
+
+    result
 }
 
 #[cfg(test)]
@@ -195,10 +300,83 @@ WantedBy=timers.target",
     fn test_to_dow() {
         let input = "Mon tue FrI Sum";
         assert_eq!(
-            vec![DoW::Mon, DoW::Tue, DoW::Fri],
+            vec!["Mon".to_string(), "Tue".to_string(), "Fri".to_string()],
             to_dow(input.to_string())
         );
         let input2 = "";
-        assert_eq!(Vec::<DoW>::new(), to_dow(input2.to_string()));
+        assert_eq!(Vec::<String>::new(), to_dow(input2.to_string()));
+    }
+
+    #[test]
+    fn test_to_year() {
+        let input = "2022 2024 2026..2030";
+        assert_eq!(
+            vec![
+                "2022".to_string(),
+                "2024".to_string(),
+                "2026..2030".to_string()
+            ],
+            to_year(input.to_string()).unwrap()
+        );
+    }
+    #[test]
+    #[should_panic]
+    fn test_to_year_fails() {
+        let input2 = "abcd 202*";
+        let _result = to_year(input2.to_string()).unwrap();
+    }
+
+    #[test]
+    fn test_to_month() {
+        let input = "1 3 5..11";
+        assert_eq!(
+            vec!["1".to_string(), "3".to_string(), "5..11".to_string()],
+            to_monthday(input.to_string()).unwrap()
+        );
+    }
+    #[test]
+    #[should_panic]
+    fn test_to_month_fails() {
+        let input2 = "3 1..1000";
+        let _result = to_monthday(input2.to_string()).unwrap();
+    }
+
+    #[test]
+    fn test_to_time() {
+        let input = "1:01:25";
+        assert_eq!("1:01:25".to_string(), to_time(input.to_string()).unwrap());
+    }
+    #[test]
+    #[should_panic]
+    fn test_to_time_fails() {
+        let input2 = "12:3A:00";
+        let _result = to_time(input2.to_string()).unwrap();
+    }
+
+    #[test]
+    fn test_format_to_calendar() {
+        let input = Format {
+            dow: vec!["Mon".to_string(), "Wed".to_string()],
+            year: vec!["2022..2024".to_string()],
+            month: vec!["1".to_string(), "3..5".to_string()],
+            day: vec!["24".to_string()],
+            time: "00:00:00".to_string(),
+        };
+        assert_eq!(
+            "Mon,Wed 2022..2024-1,3..5-24 00:00:00".to_string(),
+            format_to_calendar(input)
+        );
+    }
+
+    #[test]
+    fn test_format_to_calendar2() {
+        let input = Format {
+            dow: vec![],
+            year: vec![],
+            month: vec![],
+            day: vec![],
+            time: "12:00:00".to_string(),
+        };
+        assert_eq!("*-*-* 12:00:00".to_string(), format_to_calendar(input));
     }
 }
