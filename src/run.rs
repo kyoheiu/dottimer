@@ -170,14 +170,14 @@ pub fn run(option: bool) -> Result<(), MyError> {
                             match key {
                                 Key::Char('\n') | Key::Char('y') | Key::Char('Y') => {
                                     stdout.suspend_raw_mode()?;
-                                    print!("{}", cursor::Left(100));
+                                    print!("Added.");
                                     println!();
                                     timespan = output.clone();
                                     break;
                                 }
                                 _ => {
                                     stdout.suspend_raw_mode()?;
-                                    print!("{}", cursor::Left(100));
+                                    print!("Discarded.");
                                     print!("{}", Fg(Yellow));
                                     println!();
                                     print!("{ENTER_AGAIN}");
@@ -344,7 +344,30 @@ pub fn run(option: bool) -> Result<(), MyError> {
                             .stdout;
                         let output = std::str::from_utf8(&output)?.to_string();
                         if output != *"" {
-                            calendar_vec.push(to_normalized(output));
+                            print!("{}", Fg(Green));
+                            println!("-------------------");
+                            print!("{output}");
+                            println!("-------------------");
+                            print!("{}", Fg(Yellow));
+                            print!("{OK_YN}");
+                            print!("{}", Fg(Reset));
+                            stdout.flush()?;
+
+                            stdout.activate_raw_mode()?;
+                            let input = keys.next();
+                            if let Some(Ok(key)) = input {
+                                match key {
+                                    Key::Char('\n') | Key::Char('y') | Key::Char('Y') => {
+                                        stdout.suspend_raw_mode()?;
+                                        println!("Added.");
+                                        calendar_vec.push(to_normalized(output));
+                                    }
+                                    _ => {
+                                        stdout.suspend_raw_mode()?;
+                                        println!("Discarded.");
+                                    }
+                                }
+                            }
                         } else {
                             println!("Error occured. Please try again.");
                         }
@@ -398,13 +421,15 @@ pub fn run(option: bool) -> Result<(), MyError> {
                             if let Some(Ok(key)) = input {
                                 match key {
                                     Key::Char('\n') | Key::Char('y') | Key::Char('Y') => {
-                                        print!("{}", cursor::Left(100));
+                                        stdout.suspend_raw_mode()?;
+                                        println!("Added.");
                                         println!();
                                         timespec = output.clone();
                                         break;
                                     }
                                     _ => {
-                                        print!("{}", cursor::Left(100));
+                                        stdout.suspend_raw_mode()?;
+                                        println!("Discarded.");
                                         print!("{}", Fg(Yellow));
                                         println!();
                                         print!("{ENTER_AGAIN}");
