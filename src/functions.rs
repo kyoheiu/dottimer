@@ -2,7 +2,17 @@ use super::errors::MyError;
 use super::state::*;
 use regex::Regex;
 
-pub fn input_to_numvec(s: String) -> Result<Vec<u16>, MyError> {
+pub fn input_to_number(input: String) -> Result<u16, MyError> {
+    if input.is_empty() {
+        return Err(MyError::ParseInputError {
+            msg: "Please enter something here.".to_string(),
+        });
+    }
+    let result = input.trim().parse()?;
+    Ok(result)
+}
+
+pub fn input_to_numvec(s: String, max: u16) -> Result<Vec<u16>, MyError> {
     if s.is_empty() {
         return Err(MyError::ParseInputError {
             msg: "Please enter something here.".to_string(),
@@ -11,12 +21,30 @@ pub fn input_to_numvec(s: String) -> Result<Vec<u16>, MyError> {
     let mut result: Vec<u16> = vec![];
     for n in s.split_ascii_whitespace() {
         let x = n.parse()?;
-        if x >= 1 && x <= 5 {
+        if x >= 1 && x <= max {
             result.push(x);
         } else {
             return Err(MyError::ParseInputError {
-                msg: "Input should be in 1 to 5.".to_string(),
+                msg: "Input must be in the appropriate range.".to_string(),
             });
+        }
+    }
+    Ok(result)
+}
+
+pub fn num_to_kinds(x: u16) -> Result<Vec<Kind>, MyError> {
+    let mut result = vec![];
+    match x {
+        1 => result.push(Kind::Monotonic),
+        2 => result.push(Kind::Realtime),
+        3 => {
+            result.push(Kind::Monotonic);
+            result.push(Kind::Realtime);
+        }
+        _ => {
+            return Err(MyError::ParseInputError {
+                msg: "Input must be in 1 to 3.".to_string(),
+            })
         }
     }
     Ok(result)
@@ -56,36 +84,40 @@ Description="
     result.push_str(&state.desciprtion);
     result.push_str("\n\n[Timer]\n");
 
-    match state.timer_kind {
-        Kind::Monotonic => {
-            if let Some(vec) = state.monotonic_kind {
-                for (kind, span) in vec {
-                    match kind {
-                        MonotonicKind::OnActive => {
-                            result.push_str("OnActiveSec=");
+    for kind in state.timer_kind {
+        match kind {
+            Kind::Monotonic => {
+                if let Some(ref vec) = state.monotonic_kind {
+                    for (kind, span) in vec {
+                        match kind {
+                            MonotonicKind::OnActive => {
+                                result.push_str("OnActiveSec=");
+                            }
+                            MonotonicKind::OnBoot => {
+                                result.push_str("OnBootSec=");
+                            }
+                            MonotonicKind::OnStartup => {
+                                result.push_str("OnStartupSec=");
+                            }
+                            MonotonicKind::OnUnitActive => {
+                                result.push_str("OnUnitActiveSec=");
+                            }
+                            MonotonicKind::OnUnitInactive => {
+                                result.push_str("OnUnitInactiveSec=");
+                            }
                         }
-                        MonotonicKind::OnBoot => {
-                            result.push_str("OnBootSec=");
-                        }
-                        MonotonicKind::OnStartup => {
-                            result.push_str("OnStartupSec=");
-                        }
-                        MonotonicKind::OnUnitActive => {
-                            result.push_str("OnUnitActiveSec=");
-                        }
-                        MonotonicKind::OnUnitInactive => {
-                            result.push_str("OnUnitInactiveSec=");
-                        }
+                        result.push_str(&span);
+                        result.push('\n');
                     }
-                    result.push_str(&span);
+                }
+            }
+            Kind::Realtime => {
+                for calendar in state.calendar.as_ref().unwrap() {
+                    result.push_str("OnCalendar=");
+                    result.push_str(&calendar);
                     result.push('\n');
                 }
             }
-        }
-        Kind::Realtime => {
-            result.push_str("OnCalendar=");
-            result.push_str(&state.calendar.unwrap());
-            result.push('\n');
         }
     }
 
@@ -238,8 +270,13 @@ mod tests {
 
     #[test]
     fn test_input_to_numvec() {
-        assert_eq!(vec![1, 3], input_to_numvec("1 3".to_string()).unwrap());
-        assert_ne!(vec![1, 3], input_to_numvec("13".to_string()).unwrap());
+        assert_eq!(vec![1, 3], input_to_numvec("1 3".to_string(), 3).unwrap());
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_input_to_numvec2_fails() {
+        let _result = input_to_numvec("13".to_string(), 5).unwrap();
     }
 
     #[test]
@@ -266,7 +303,7 @@ Normalized form: Mon *-*-* 00:00:00
     fn test_to_monotonic_timer() {
         let input = State {
             desciprtion: "Example Timer".to_string(),
-            timer_kind: Kind::Monotonic,
+            timer_kind: vec![Kind::Monotonic],
             monotonic_kind: Some(vec![
                 (MonotonicKind::OnActive, "4min".to_string()),
                 (MonotonicKind::OnBoot, "5min".to_string()),
@@ -292,9 +329,9 @@ WantedBy=timers.target",
     fn test_to_realtime_timer() {
         let input = State {
             desciprtion: "Example Timer2".to_string(),
-            timer_kind: Kind::Realtime,
+            timer_kind: vec![Kind::Realtime],
             monotonic_kind: None,
-            calendar: Some("Mon *-*-* 00:00:00".to_string()),
+            calendar: Some(vec!["Mon *-*-* 00:00:00".to_string()]),
             format: None,
         };
         assert_eq!(
@@ -399,5 +436,20 @@ WantedBy=timers.target",
             time: "12:00:00".to_string(),
         };
         assert_eq!("*-*-* 12:00:00".to_string(), format_to_calendar(input));
+    }
+
+    #[test]
+    fn test_vec_to_kinds() {
+        let input = 3;
+        assert_eq!(
+            vec![Kind::Monotonic, Kind::Realtime],
+            num_to_kinds(input).unwrap()
+        );
+    }
+
+    #[test]
+    fn test_input_to_number() {
+        let input = "3".to_string();
+        assert_eq!(3, input_to_number(input).unwrap());
     }
 }

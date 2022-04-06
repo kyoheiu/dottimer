@@ -2,12 +2,16 @@ pub const WELCOME: &str = "\u{23F2} Welcome to dottimer!\u{1F680}";
 pub const ENTER_DESC: &str = "First, please enter the description of the timer.";
 pub const TIMER_KIND: &str = "systemd timers are difined as one of two types:\nMonotonic timers activate after a time span relative to a varying starting point.\nRealtime timers activate on a calendar event, the same way that cronjobs do.";
 pub const ENTER_KIND: &str = "Which kind of timer do you want?";
+pub const KIND_LIST: &str = "1 Monotonic timers
+2 Realtime timers
+3 Both
+";
 pub const CHOOSE_MONOTONIC_KIND: &str = "Choose kinds of Monotonic timer(i.e. \"1\" or \"2 3 4\"):";
 pub const PARSE_ERROR: &str = "Parse error: Enter again. > ";
 pub const ENTER_SPAN :&str = "\nEnter the time span for each timer.\nExample: \"50\" for OnBootSec means 50s after boot-up. \nThe argument may also include time units.\nAnother example: \"5h 30min\" for OnBootSec means 5 hours and 30 minutes after boot-up.\nFor details about the syntax of time spans, see systemd.time(7).";
 pub const OK_YN: &str = "OK? [Y/n] ";
 pub const ENTER_AGAIN: &str = "Enter again. > ";
-pub const IS_INTERACTIVE: &str = "Do you want the interactive input for time spec? [y/N]";
+pub const IS_INTERACTIVE: &str = "Do you want the interactive input for time spec? [y/N] ";
 pub const DOW :&str = "1. the Day of Week:\n[Mon, Tue, Wed, Thu, Fri, Sat, Sun]\nEnter the days you want (i.e. \"Mon, Wed\") default: None";
 pub const YEAR: &str =
     "2. Year:\nEnter year (i.e. \"2022\", \"2023..2025\", or \"2024 2025 2028..2030\") default: *";
