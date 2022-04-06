@@ -237,12 +237,12 @@ pub fn to_time(input: String) -> Result<String, MyError> {
         return Ok("00:00:00".to_string());
     }
     let re = Regex::new(r"^[0-9]{1,2}:[0-9]{1,2}:[0-9]{1,2}$")?;
-    if !re.is_match(&input) {
+    if !re.is_match(input.trim()) {
         return Err(MyError::ParseInputError {
             msg: "cannot parse input for time".to_string(),
         });
     }
-    Ok(input)
+    Ok(input.trim().to_string())
 }
 
 pub fn format_to_calendar(format: Format) -> String {

@@ -220,11 +220,8 @@ pub fn run(option: bool) -> Result<(), MyError> {
                         match input {
                             Key::Char('Y') | Key::Char('y') => {
                                 is_interactive = true;
-                                break;
                             }
-                            _ => {
-                                break;
-                            }
+                            _ => {}
                         }
                     }
                     stdout.suspend_raw_mode()?;
