@@ -1,4 +1,4 @@
-pub const WELCOME: &str = "\u{23F2} Welcome to dottimer! \u{1F680}";
+pub const WELCOME: &str = "\u{23F2} Welcome to dottimer!\u{1F680}";
 pub const ENTER_DESC: &str = "First, please enter the description of the timer.";
 pub const TIMER_KIND: &str = "systemd timers are difined as one of two types:\nMonotonic timers activate after a time span relative to a varying starting point.\nRealtime timers activate on a calendar event, the same way that cronjobs do.";
 pub const ENTER_KIND: &str = "Which kind of timer do you want?";
@@ -24,3 +24,10 @@ pub const DAY: &str = "4. Day:\nEnter day (i.e. \"2\", \"13..15\", or \"20 24 26
 pub const TIME: &str = "5. Time:\nEnter time (i.e. \"12:00:00\") default: 00:00:00";
 pub const ENTER_SPEC: &str = "Enter the time spec > ";
 pub const MORE_DETAIL: &str = "For more details, see systemd.timer(5) and systemd.time(7).";
+
+pub const MONOTONIC_KIND: &str = "                     Relative to
+1 OnActiveSec        the moment the timer unit is activated
+2 OnBootSec          when the machines was booted up
+3 OnBootSec          when the service manager was first started
+4 OnUnitActiveSec    when the unit is activating was last activated
+5 OnUnitInactiveSec  when the unit is activating was last deactivated";

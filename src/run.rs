@@ -98,15 +98,7 @@ pub fn run() -> Result<(), MyError> {
             println!("{CHOOSE_MONOTONIC_KIND}");
             print!("{}", Fg(Blue));
             print!("{}", cursor::Left(100));
-            println!("{KIND1}");
-            print!("{}", cursor::Left(100));
-            println!("{KIND2}");
-            print!("{}", cursor::Left(100));
-            println!("{KIND3}");
-            print!("{}", cursor::Left(100));
-            println!("{KIND4}");
-            print!("{}", cursor::Left(100));
-            println!("{KIND5}");
+            println!("{MONOTONIC_KIND}");
             print!("{}", cursor::Left(100));
             print!("{}", Fg(Reset));
 
