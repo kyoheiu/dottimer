@@ -2,7 +2,7 @@ use crate::functions::*;
 
 use super::errors::MyError;
 use super::functions::input_to_numvec;
-use super::messeages::*;
+use super::messages::*;
 use super::state::*;
 use std::io::stdout;
 use std::io::Write;
@@ -13,7 +13,7 @@ use termion::input::TermRead;
 use termion::raw::IntoRawMode;
 use termion::style;
 
-pub fn run() -> Result<(), MyError> {
+pub fn run(option: bool) -> Result<(), MyError> {
     let mut state = State::new();
 
     let mut calendar_vec = vec![];
@@ -106,7 +106,6 @@ pub fn run() -> Result<(), MyError> {
                 }
                 let chosen = chosen?;
 
-                // after this line, one loop should be used
                 print!("{}", Fg(Blue));
                 println!("{ENTER_SPAN}");
                 print!("{}", Fg(Reset));
@@ -216,17 +215,15 @@ pub fn run() -> Result<(), MyError> {
 
                     let mut is_interactive = false;
                     stdout.activate_raw_mode()?;
-                    loop {
-                        let input = keys.next();
-                        if let Some(Ok(input)) = input {
-                            match input {
-                                Key::Char('Y') | Key::Char('y') => {
-                                    is_interactive = true;
-                                    break;
-                                }
-                                _ => {
-                                    break;
-                                }
+                    let input = keys.next();
+                    if let Some(Ok(input)) = input {
+                        match input {
+                            Key::Char('Y') | Key::Char('y') => {
+                                is_interactive = true;
+                                break;
+                            }
+                            _ => {
+                                break;
                             }
                         }
                     }
@@ -450,6 +447,151 @@ pub fn run() -> Result<(), MyError> {
     }
     state.calendar = Some(calendar_vec);
     stdout.suspend_raw_mode()?;
+
+    if option {
+        print!("{}{}", Fg(Blue), style::Bold);
+        println!(":: Option ::");
+        print!("{}", style::Reset);
+        print!("{}", Fg(Yellow));
+        println!("{OPTION_KIND}");
+        print!("{}", Fg(Blue));
+        println!("{OPTION_Q}");
+        print!("{}", Fg(Reset));
+
+        print!("> {}", cursor::Show);
+        stdout.flush()?;
+
+        let mut buffer = String::new();
+        stdin.read_line(&mut buffer)?;
+        let mut options = input_to_numvec(buffer.trim().to_string(), 8);
+        loop {
+            if options.is_err() {
+                print!("{}", Fg(Yellow));
+                print!("{PARSE_ERROR}");
+                print!("{}", Fg(Reset));
+                stdout.flush()?;
+                let mut buffer = String::new();
+                stdin.read_line(&mut buffer)?;
+                options = input_to_numvec(buffer.trim().to_string(), 5);
+                continue;
+            } else {
+                break;
+            }
+        }
+        let options = options?;
+        stdout.flush()?;
+
+        for i in options {
+            match i {
+                1 => {
+                    print!("AccuracySec > ");
+                    stdout.flush()?;
+                    let mut buffer = String::new();
+                    stdin.read_line(&mut buffer)?;
+                    state.accuracy = Some(buffer.trim().to_string());
+                }
+                2 => {
+                    print!("RandomizedDelaySec > ");
+                    stdout.flush()?;
+                    let mut buffer = String::new();
+                    stdin.read_line(&mut buffer)?;
+                    state.randomized_delay = Some(buffer.trim().to_string());
+                }
+                3 => {
+                    print!("FixedRandomDelay to true? [Y/n] ");
+                    stdout.flush()?;
+                    let input = keys.next();
+                    if let Some(Ok(input)) = input {
+                        match input {
+                            Key::Char('n') | Key::Char('N') => {
+                                continue;
+                            }
+                            _ => {
+                                state.fixed_random_delay = true;
+                            }
+                        }
+                    }
+                }
+                4 => {
+                    print!("OnClockChange to true? [Y/n] ");
+                    stdout.flush()?;
+                    let input = keys.next();
+                    if let Some(Ok(input)) = input {
+                        match input {
+                            Key::Char('n') | Key::Char('N') => {
+                                continue;
+                            }
+                            _ => {
+                                state.on_clock_change = true;
+                            }
+                        }
+                    }
+                }
+                5 => {
+                    print!("OnTimezoneChange to true? [Y/n] ");
+                    stdout.flush()?;
+                    let input = keys.next();
+                    if let Some(Ok(input)) = input {
+                        match input {
+                            Key::Char('n') | Key::Char('N') => {
+                                continue;
+                            }
+                            _ => {
+                                state.on_timezone_change = true;
+                            }
+                        }
+                    }
+                }
+                6 => {
+                    print!("Persistent to true? [Y/n] ");
+                    stdout.flush()?;
+                    let input = keys.next();
+                    if let Some(Ok(input)) = input {
+                        match input {
+                            Key::Char('n') | Key::Char('N') => {
+                                continue;
+                            }
+                            _ => {
+                                state.persistent = true;
+                            }
+                        }
+                    }
+                }
+                7 => {
+                    print!("WakeSystem to true? [Y/n] ");
+                    stdout.flush()?;
+                    let input = keys.next();
+                    if let Some(Ok(input)) = input {
+                        match input {
+                            Key::Char('n') | Key::Char('N') => {
+                                continue;
+                            }
+                            _ => {
+                                state.wake_system = true;
+                            }
+                        }
+                    }
+                }
+                8 => {
+                    print!("RemainAfterElapse to true? [Y/n] ");
+                    stdout.flush()?;
+                    let input = keys.next();
+                    if let Some(Ok(input)) = input {
+                        match input {
+                            Key::Char('n') | Key::Char('N') => {
+                                continue;
+                            }
+                            _ => {
+                                state.remain_after_elapse = true;
+                            }
+                        }
+                    }
+                }
+                _ => continue,
+            }
+        }
+    }
+
     println!();
     print!("{}{}", Fg(Magenta), style::Bold);
     println!("RESULT:");

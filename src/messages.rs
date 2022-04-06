@@ -32,3 +32,40 @@ pub const MONOTONIC_KIND: &str = "                     (Relative to)
 3 OnStartupSec          when the service manager was first started
 4 OnUnitActiveSec    when the unit is activating was last activated
 5 OnUnitInactiveSec  when the unit is activating was last deactivated";
+
+pub const OPTION_KIND: &str =
+    "1 AccuracySec         specify the accuracy the timer shall elapse with
+2 RandomizedDelaySec  delay the timer randomly (max: the value)
+3 FixedRandomDelay    if true, the randomized offset is reused for all
+                      (default: false)
+4 OnClockChange       if true, the service unit will be triggered
+                      when the system clock jumps relative to the monotonic clock
+                      (default: false)
+5 OnTimezoneChange    if true, the service unit will be triggered
+                      when the local system timezone is modified
+                      (default: false)
+6 Persistent          If true, the time when the service unit was
+                      last triggered is stored on disk.
+                      When the timer is activated,
+                      the service unit is triggered immediately if
+                      it would have been triggered at least once
+                      during the time when the timer was inactive.
+                      (default: false)
+7 WakeSystem          If true, an elapsing timer will cause
+                      the system to resume from suspend
+                      (default: false)
+8 RemainAfterElapse   If true, a timer will stay loaded,
+                      and its state remains queryable
+                      (default: false)
+";
+pub const OPTION_Q: &str = "Choose kinds of option(i.e. \"1\" or \"2 3 4\"):";
+
+pub const HELP: &str = "
+dottimer: systemd timer generator that is not insane
+
+OPTIONS:
+    -H, --help
+            Print help information
+    -o
+            Enable to choose options like AccuracySec or Persistent
+";

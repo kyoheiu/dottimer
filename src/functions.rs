@@ -120,6 +120,40 @@ Description="
             }
         }
     }
+    if state.accuracy.is_some() {
+        result.push_str("AccuracySec=");
+        result.push_str(&state.accuracy.unwrap());
+        result.push('\n');
+    }
+    if state.randomized_delay.is_some() {
+        result.push_str("RandomizedDelaySec=");
+        result.push_str(&state.randomized_delay.unwrap());
+        result.push('\n');
+    }
+    if state.fixed_random_delay {
+        result.push_str("FixedRandomDelay=true");
+        result.push('\n');
+    }
+    if state.on_clock_change {
+        result.push_str("OnClockChange=true");
+        result.push('\n');
+    }
+    if state.on_timezone_change {
+        result.push_str("OnTimezoneChange=true");
+        result.push('\n');
+    }
+    if state.persistent {
+        result.push_str("Persistent=true");
+        result.push('\n');
+    }
+    if state.wake_system {
+        result.push_str("WakeSystem=true");
+        result.push('\n');
+    }
+    if state.remain_after_elapse {
+        result.push_str("RemainAfterElapse=true");
+        result.push('\n');
+    }
 
     result.push_str("\n[Install]\nWantedBy=timers.target");
 
@@ -326,6 +360,48 @@ Description=Example Timer
 [Timer]
 OnActiveSec=4min
 OnBootSec=5min
+
+[Install]
+WantedBy=timers.target",
+            to_timer(input)
+        );
+    }
+
+    #[test]
+    fn test_to_monotonic_timer_with_option() {
+        let input = State {
+            desciprtion: "Example Timer".to_string(),
+            timer_kind: vec![Kind::Monotonic],
+            monotonic_kind: Some(vec![
+                (MonotonicKind::OnActive, "4min".to_string()),
+                (MonotonicKind::OnBoot, "5min".to_string()),
+            ]),
+            calendar: None,
+            format: None,
+            accuracy: Some("1us".to_string()),
+            randomized_delay: Some("1us".to_string()),
+            fixed_random_delay: true,
+            on_clock_change: true,
+            on_timezone_change: true,
+            persistent: true,
+            wake_system: true,
+            remain_after_elapse: true,
+        };
+        assert_eq!(
+            "[Unit]
+Description=Example Timer
+
+[Timer]
+OnActiveSec=4min
+OnBootSec=5min
+AccuracySec=1us
+RandomizedDelaySec=1us
+FixedRandomDelay=true
+OnClockChange=true
+OnTimezoneChange=true
+Persistent=true
+WakeSystem=true
+RemainAfterElapse=true
 
 [Install]
 WantedBy=timers.target",
