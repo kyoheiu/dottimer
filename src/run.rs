@@ -474,9 +474,9 @@ pub fn run(option: bool) -> Result<(), MyError> {
         print!("{}{}", Fg(Blue), style::Bold);
         println!(":: Option ::");
         print!("{}", style::Reset);
-        print!("{}", Fg(Yellow));
-        println!("{OPTION_KIND}");
         print!("{}", Fg(Blue));
+        println!("{OPTION_KIND}");
+        print!("{}", Fg(Yellow));
         println!("{OPTION_Q}");
         print!("{}", Fg(Reset));
 
@@ -506,21 +506,27 @@ pub fn run(option: bool) -> Result<(), MyError> {
         for i in options {
             match i {
                 1 => {
+                    print!("{}", Fg(Yellow));
                     print!("AccuracySec > ");
+                    print!("{}", Fg(Reset));
                     stdout.flush()?;
                     let mut buffer = String::new();
                     stdin.read_line(&mut buffer)?;
                     state.accuracy = Some(buffer.trim().to_string());
                 }
                 2 => {
+                    print!("{}", Fg(Yellow));
                     print!("RandomizedDelaySec > ");
+                    print!("{}", Fg(Reset));
                     stdout.flush()?;
                     let mut buffer = String::new();
                     stdin.read_line(&mut buffer)?;
                     state.randomized_delay = Some(buffer.trim().to_string());
                 }
                 3 => {
+                    print!("{}", Fg(Yellow));
                     print!("FixedRandomDelay to true? [Y/n] ");
+                    print!("{}", Fg(Reset));
                     stdout.flush()?;
                     let input = keys.next();
                     if let Some(Ok(input)) = input {
@@ -535,7 +541,9 @@ pub fn run(option: bool) -> Result<(), MyError> {
                     }
                 }
                 4 => {
+                    print!("{}", Fg(Yellow));
                     print!("OnClockChange to true? [Y/n] ");
+                    print!("{}", Fg(Reset));
                     stdout.flush()?;
                     let input = keys.next();
                     if let Some(Ok(input)) = input {
@@ -550,7 +558,9 @@ pub fn run(option: bool) -> Result<(), MyError> {
                     }
                 }
                 5 => {
+                    print!("{}", Fg(Yellow));
                     print!("OnTimezoneChange to true? [Y/n] ");
+                    print!("{}", Fg(Reset));
                     stdout.flush()?;
                     let input = keys.next();
                     if let Some(Ok(input)) = input {
@@ -565,7 +575,9 @@ pub fn run(option: bool) -> Result<(), MyError> {
                     }
                 }
                 6 => {
+                    print!("{}", Fg(Yellow));
                     print!("Persistent to true? [Y/n] ");
+                    print!("{}", Fg(Reset));
                     stdout.flush()?;
                     let input = keys.next();
                     if let Some(Ok(input)) = input {
@@ -580,7 +592,9 @@ pub fn run(option: bool) -> Result<(), MyError> {
                     }
                 }
                 7 => {
+                    print!("{}", Fg(Yellow));
                     print!("WakeSystem to true? [Y/n] ");
+                    print!("{}", Fg(Reset));
                     stdout.flush()?;
                     let input = keys.next();
                     if let Some(Ok(input)) = input {
@@ -595,7 +609,9 @@ pub fn run(option: bool) -> Result<(), MyError> {
                     }
                 }
                 8 => {
+                    print!("{}", Fg(Yellow));
                     print!("RemainAfterElapse to true? [Y/n] ");
+                    print!("{}", Fg(Reset));
                     stdout.flush()?;
                     let input = keys.next();
                     if let Some(Ok(input)) = input {
