@@ -40,8 +40,7 @@ pub fn run() -> Result<(), MyError> {
 
     print!("{}", Fg(Yellow));
     println!("{ENTER_KIND}");
-    print!("{}", Fg(Reset));
-    print!("{}", cursor::Left(33));
+    println!("{}", Fg(Reset));
 
     stdout.activate_raw_mode()?;
     print!("{}", cursor::Hide);
@@ -102,7 +101,6 @@ pub fn run() -> Result<(), MyError> {
             print!("{}", cursor::Left(100));
             print!("{}", Fg(Reset));
 
-            stdout.suspend_raw_mode()?;
             print!("> {}", cursor::Show);
             stdout.flush()?;
 
@@ -134,7 +132,6 @@ pub fn run() -> Result<(), MyError> {
             let mut timespan = String::new();
 
             for i in chosen {
-                stdout.suspend_raw_mode()?;
                 print!("{}", Fg(Yellow));
                 match i {
                     1 => print!("OnActiveSec > "),
@@ -218,7 +215,6 @@ pub fn run() -> Result<(), MyError> {
                     _ => continue,
                 }
             }
-            stdout.activate_raw_mode()?;
             state.monotonic_kind = Some(monotonic_vec);
         }
 
@@ -356,7 +352,6 @@ pub fn run() -> Result<(), MyError> {
                     println!("Error occured. Please try again.");
                 }
             } else {
-                stdout.suspend_raw_mode()?;
                 print!("{}", cursor::Show);
                 print!("{ENTER_SPEC}");
                 stdout.flush()?;
