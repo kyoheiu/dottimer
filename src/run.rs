@@ -270,17 +270,14 @@ pub fn run() -> Result<(), MyError> {
                 print!("{}", cursor::Show);
 
                 print!("{}", Fg(Yellow));
-                println!("1. the Day of Week:");
-                println!("[Mon, Tue, Wed, Thu, Fri, Sat, Sun]");
-                println!("Enter the days you want (i.e. \"Mon, Wed\") default: None");
+                println!("{DOW}");
                 print!("{}", Fg(Reset));
                 let mut buffer = String::new();
                 stdin.read_line(&mut buffer)?;
                 format.dow = to_dow(buffer);
 
                 print!("{}", Fg(Yellow));
-                println!("2. Year:");
-                println!("Enter year (i.e. \"2022\", \"2023..2025\", or \"2024 2025 2028..2030\") default: *");
+                println!("{YEAR}");
                 print!("{}", Fg(Reset));
                 let mut buffer = String::new();
                 stdin.read_line(&mut buffer)?;
@@ -299,8 +296,7 @@ pub fn run() -> Result<(), MyError> {
                 format.year = parsed_year?;
 
                 print!("{}", Fg(Yellow));
-                println!("3. Month:");
-                println!("Enter month (i.e. \"1\", \"3..5\", or \"2 4 6..11\") default: *");
+                println!("{MONTH}");
                 print!("{}", Fg(Reset));
                 let mut buffer = String::new();
                 stdin.read_line(&mut buffer)?;
@@ -319,8 +315,7 @@ pub fn run() -> Result<(), MyError> {
                 format.month = parsed_month?;
 
                 print!("{}", Fg(Yellow));
-                println!("4. Day:");
-                println!("Enter day (i.e. \"2\", \"13..15\", or \"20 24 26..28\") default: *");
+                println!("{DAY}");
                 print!("{}", Fg(Reset));
                 let mut buffer = String::new();
                 stdin.read_line(&mut buffer)?;
@@ -339,8 +334,7 @@ pub fn run() -> Result<(), MyError> {
                 format.day = parsed_day?;
 
                 print!("{}", Fg(Yellow));
-                println!("5. Time:");
-                println!("Enter time (i.e. \"12:00:00\") default: 00:00:00");
+                println!("{TIME}");
                 print!("{}", Fg(Reset));
                 let mut buffer = String::new();
                 stdin.read_line(&mut buffer)?;
@@ -372,7 +366,7 @@ pub fn run() -> Result<(), MyError> {
             } else {
                 stdout.suspend_raw_mode()?;
                 print!("{}", cursor::Show);
-                print!("Enter the time spec > ");
+                print!("{ENTER_SPEC}");
                 stdout.flush()?;
 
                 let mut timespec = String::new();
@@ -411,7 +405,7 @@ pub fn run() -> Result<(), MyError> {
                     print!("{output}");
                     println!("-------------------------------------------");
                     print!("{}", Fg(Yellow));
-                    print!("OK? [Y/n] ");
+                    print!("{OK_YN}");
                     print!("{}", Fg(Reset));
                     stdout.flush()?;
 
@@ -429,7 +423,7 @@ pub fn run() -> Result<(), MyError> {
                                 print!("{}", cursor::Left(100));
                                 print!("{}", Fg(Yellow));
                                 println!();
-                                print!("Enter again > ");
+                                print!("{ENTER_AGAIN}");
                                 stdout.suspend_raw_mode()?;
                                 print!("{}", Fg(Reset));
                                 stdout.flush()?;
@@ -451,7 +445,7 @@ pub fn run() -> Result<(), MyError> {
     println!("++++++++++++++++++++");
     println!();
     print!("{}{}", Fg(Reset), style::Reset);
-    println!("For more details, see systemd.timer(5) and systemd.time(7).");
+    println!("{MORE_DETAIL}");
     print!("{}", cursor::Show);
     Ok(())
 }
