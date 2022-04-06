@@ -433,10 +433,12 @@ pub fn run() -> Result<(), MyError> {
                     if let Some(Ok(key)) = input {
                         match key {
                             Key::Char('y') | Key::Char('Y') => {
+                                stdout.suspend_raw_mode()?;
                                 println!();
                                 continue;
                             }
                             _ => {
+                                stdout.suspend_raw_mode()?;
                                 println!();
                                 break;
                             }

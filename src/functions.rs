@@ -310,6 +310,14 @@ Normalized form: Mon *-*-* 00:00:00
             ]),
             calendar: None,
             format: None,
+            accuracy: None,
+            randomized_delay: None,
+            fixed_random_delay: false,
+            on_clock_change: false,
+            on_timezone_change: false,
+            persistent: false,
+            wake_system: false,
+            remain_after_elapse: false,
         };
         assert_eq!(
             "[Unit]
@@ -333,6 +341,14 @@ WantedBy=timers.target",
             monotonic_kind: None,
             calendar: Some(vec!["Mon *-*-* 00:00:00".to_string()]),
             format: None,
+            accuracy: None,
+            randomized_delay: None,
+            fixed_random_delay: false,
+            on_clock_change: false,
+            on_timezone_change: false,
+            persistent: false,
+            wake_system: false,
+            remain_after_elapse: false,
         };
         assert_eq!(
             "[Unit]

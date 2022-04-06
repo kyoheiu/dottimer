@@ -20,6 +20,14 @@ pub struct State {
     pub monotonic_kind: Option<Vec<(MonotonicKind, String)>>,
     pub calendar: Option<Vec<String>>,
     pub format: Option<Vec<Format>>,
+    pub accuracy: Option<String>,
+    pub randomized_delay: Option<String>,
+    pub fixed_random_delay: bool,
+    pub on_clock_change: bool,
+    pub on_timezone_change: bool,
+    pub persistent: bool,
+    pub wake_system: bool,
+    pub remain_after_elapse: bool,
 }
 
 impl State {
@@ -30,6 +38,14 @@ impl State {
             monotonic_kind: None,
             calendar: None,
             format: None,
+            accuracy: None,
+            randomized_delay: None,
+            fixed_random_delay: false,
+            on_clock_change: false,
+            on_timezone_change: false,
+            persistent: false,
+            wake_system: false,
+            remain_after_elapse: false,
         }
     }
 }
