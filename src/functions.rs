@@ -3,11 +3,20 @@ use super::state::*;
 use regex::Regex;
 
 pub fn input_to_numvec(s: String) -> Result<Vec<u16>, MyError> {
+    if s.is_empty() {
+        return Err(MyError::ParseInputError {
+            msg: "Please enter something here.".to_string(),
+        });
+    }
     let mut result: Vec<u16> = vec![];
     for n in s.split_ascii_whitespace() {
         let x = n.parse()?;
         if x >= 1 && x <= 5 {
             result.push(x);
+        } else {
+            return Err(MyError::ParseInputError {
+                msg: "Input should be in 1 to 5.".to_string(),
+            });
         }
     }
     Ok(result)
