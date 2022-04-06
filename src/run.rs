@@ -7,7 +7,7 @@ use super::state::*;
 use std::io::stdout;
 use std::io::Write;
 use termion::color::*;
-use termion::cursor::{self, DetectCursorPos};
+use termion::cursor;
 use termion::event::Key;
 use termion::input::TermRead;
 use termion::raw::IntoRawMode;
@@ -45,7 +45,6 @@ pub fn run() -> Result<(), MyError> {
     println!("{ENTER_KIND}");
     println!("{}", Fg(Reset));
 
-    let mut kind = Kind::Monotonic;
     print!("{KIND_LIST}> ");
     stdout.flush()?;
 
@@ -113,9 +112,9 @@ pub fn run() -> Result<(), MyError> {
                 print!("{}", Fg(Reset));
 
                 let mut monotonic_vec: Vec<(MonotonicKind, String)> = vec![];
-                let mut timespan = String::new();
 
                 for i in chosen {
+                    let mut timespan = String::new();
                     print!("{}", Fg(Yellow));
                     match i {
                         1 => print!("OnActiveSec > "),
@@ -202,6 +201,7 @@ pub fn run() -> Result<(), MyError> {
                     }
                 }
                 state.monotonic_kind = Some(monotonic_vec);
+                println!();
             }
 
             Kind::Realtime => {
@@ -245,16 +245,22 @@ pub fn run() -> Result<(), MyError> {
 
                         print!("{}", cursor::Show);
 
-                        print!("{}", Fg(Yellow));
+                        print!("{}", Fg(Blue));
                         println!("{DOW}");
+                        print!("{}", Fg(Yellow));
+                        println!("{DOW_Q}");
                         print!("{}", Fg(Reset));
+                        stdout.flush()?;
                         let mut buffer = String::new();
                         stdin.read_line(&mut buffer)?;
                         format.dow = to_dow(buffer);
 
-                        print!("{}", Fg(Yellow));
+                        print!("{}", Fg(Blue));
                         println!("{YEAR}");
+                        print!("{}", Fg(Yellow));
+                        println!("{YEAR_Q}");
                         print!("{}", Fg(Reset));
+                        stdout.flush()?;
                         let mut buffer = String::new();
                         stdin.read_line(&mut buffer)?;
                         let mut parsed_year = to_year(buffer.clone());
@@ -271,9 +277,12 @@ pub fn run() -> Result<(), MyError> {
                         }
                         format.year = parsed_year?;
 
-                        print!("{}", Fg(Yellow));
+                        print!("{}", Fg(Blue));
                         println!("{MONTH}");
+                        print!("{}", Fg(Yellow));
+                        println!("{MONTH_Q}");
                         print!("{}", Fg(Reset));
+                        stdout.flush()?;
                         let mut buffer = String::new();
                         stdin.read_line(&mut buffer)?;
                         let mut parsed_month = to_monthday(buffer.clone());
@@ -290,9 +299,12 @@ pub fn run() -> Result<(), MyError> {
                         }
                         format.month = parsed_month?;
 
-                        print!("{}", Fg(Yellow));
+                        print!("{}", Fg(Blue));
                         println!("{DAY}");
+                        print!("{}", Fg(Yellow));
+                        println!("{DAY_Q}");
                         print!("{}", Fg(Reset));
+                        stdout.flush()?;
                         let mut buffer = String::new();
                         stdin.read_line(&mut buffer)?;
                         let mut parsed_day = to_monthday(buffer.clone());
@@ -309,9 +321,12 @@ pub fn run() -> Result<(), MyError> {
                         }
                         format.day = parsed_day?;
 
-                        print!("{}", Fg(Yellow));
+                        print!("{}", Fg(Blue));
                         println!("{TIME}");
+                        print!("{}", Fg(Yellow));
+                        println!("{TIME_Q}");
                         print!("{}", Fg(Reset));
+                        stdout.flush()?;
                         let mut buffer = String::new();
                         stdin.read_line(&mut buffer)?;
                         let mut parsed_time = to_time(buffer);

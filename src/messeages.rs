@@ -12,19 +12,23 @@ pub const ENTER_SPAN :&str = "\nEnter the time span for each timer.\nExample: \"
 pub const OK_YN: &str = "OK? [Y/n] ";
 pub const ENTER_AGAIN: &str = "Enter again. > ";
 pub const IS_INTERACTIVE: &str = "Do you want the interactive input for time spec? [y/N] ";
-pub const DOW :&str = "1. the Day of Week:\n[Mon, Tue, Wed, Thu, Fri, Sat, Sun]\nEnter the days you want (i.e. \"Mon, Wed\") default: None";
-pub const YEAR: &str =
-    "2. Year:\nEnter year (i.e. \"2022\", \"2023..2025\", or \"2024 2025 2028..2030\") default: *";
-pub const MONTH: &str =
-    "3. Month:\nEnter month (i.e. \"1\", \"3..5\", or \"2 4 6..11\") default: *";
-pub const DAY: &str = "4. Day:\nEnter day (i.e. \"2\", \"13..15\", or \"20 24 26..28\") default: *";
-pub const TIME: &str = "5. Time:\nEnter time (i.e. \"12:00:00\") default: 00:00:00";
+pub const DOW: &str = "[1/5] the Day of Week:\n<Mon, Tue, Wed, Thu, Fri, Sat, Sun>";
+pub const DOW_Q: &str = "Enter the days you want (i.e. \"Mon Wed\") default: None";
+pub const YEAR: &str = "[2/5] Year:";
+pub const YEAR_Q: &str =
+    "Enter the year (i.e. \"2022\", \"2023..2025\", or \"2024 2025 2028..2030\") default: *";
+pub const MONTH: &str = "[3/5] Month:";
+pub const MONTH_Q: &str = "Enter the month (i.e. \"1\", \"3..5\", or \"2 4 6..11\") default: *";
+pub const DAY: &str = "[4/5] Day:";
+pub const DAY_Q: &str = "Enter the day (i.e. \"2\", \"13..15\", or \"20 24 26..28\") default: *";
+pub const TIME: &str = "[5/5] Time:";
+pub const TIME_Q: &str = "Enter the time (i.e. \"12:00:00\") default: 00:00:00";
 pub const ENTER_SPEC: &str = "Enter the time spec > ";
 pub const MORE_DETAIL: &str = "For more details, see systemd.timer(5) and systemd.time(7).";
 
 pub const MONOTONIC_KIND: &str = "                     (Relative to)
 1 OnActiveSec        the moment the timer unit is activated
 2 OnBootSec          when the machines was booted up
-3 OnBootSec          when the service manager was first started
+3 OnStartupSec          when the service manager was first started
 4 OnUnitActiveSec    when the unit is activating was last activated
 5 OnUnitInactiveSec  when the unit is activating was last deactivated";

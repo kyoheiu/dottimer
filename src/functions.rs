@@ -106,7 +106,7 @@ Description="
                                 result.push_str("OnUnitInactiveSec=");
                             }
                         }
-                        result.push_str(&span);
+                        result.push_str(span);
                         result.push('\n');
                     }
                 }
@@ -114,7 +114,7 @@ Description="
             Kind::Realtime => {
                 for calendar in state.calendar.as_ref().unwrap() {
                     result.push_str("OnCalendar=");
-                    result.push_str(&calendar);
+                    result.push_str(calendar);
                     result.push('\n');
                 }
             }
