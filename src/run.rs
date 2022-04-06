@@ -2,7 +2,6 @@ use crate::functions::*;
 
 use super::errors::MyError;
 use super::functions::input_to_numvec;
-use super::messages::KINDS_OF_TIMER;
 use super::state::*;
 use std::io::stdout;
 use std::io::Write;
@@ -11,6 +10,7 @@ use termion::cursor::{self, DetectCursorPos};
 use termion::event::Key;
 use termion::input::TermRead;
 use termion::raw::IntoRawMode;
+use termion::style;
 
 pub fn run() -> Result<(), MyError> {
     let mut state = State::new();
@@ -26,17 +26,12 @@ pub fn run() -> Result<(), MyError> {
     stdin.read_line(&mut buffer)?;
     state.desciprtion = buffer.trim().to_string();
 
-    print!("{}", cursor::Hide);
-    stdout.activate_raw_mode()?;
     println!();
 
-    let (_, y) = stdout.cursor_pos()?;
-    let mut i = y;
     print!("{}", Fg(Blue));
-    for line in KINDS_OF_TIMER.lines() {
-        println!("{}{}", line, cursor::Goto(1, i));
-        i += 1;
-    }
+    println!(
+        "systemd timers are difined as one of two types:\nMonotonic timers activate after a time span relative to a varying starting point.\nRealtime timers activate on a calendar event, the same way that cronjobs do."
+    );
     print!("{}", Fg(Reset));
 
     print!("{}", Fg(Yellow));
@@ -44,6 +39,8 @@ pub fn run() -> Result<(), MyError> {
     print!("{}", Fg(Reset));
     print!("{}", cursor::Left(33));
 
+    stdout.activate_raw_mode()?;
+    print!("{}", cursor::Hide);
     let mut keys = std::io::stdin().keys();
     let mut kind = Kind::Monotonic;
     println!("> Monotonic");
@@ -85,6 +82,8 @@ pub fn run() -> Result<(), MyError> {
         }
     }
     state.timer_kind = kind;
+    stdout.suspend_raw_mode()?;
+    print!("{}", cursor::Hide);
 
     println!();
     println!();
@@ -134,6 +133,7 @@ pub fn run() -> Result<(), MyError> {
             }
             let chosen = chosen?;
 
+            // after this line, one loop should be used
             print!("{}", Fg(Blue));
             println!("\nEnter the time span for each timer.\nExample: \"50\" for OnBootSec means 50s after boot-up. \nThe argument may also include time units.\nAnother example: \"5h 30min\" for OnBootSec means 5 hours and 30 minutes after boot-up.\nFor details about the syntax of time spans, see systemd.time(7).");
             print!("{}", Fg(Reset));
@@ -154,108 +154,64 @@ pub fn run() -> Result<(), MyError> {
                 }
                 print!("{}", Fg(Reset));
                 stdout.flush()?;
-                let mut buffer = String::new();
-                stdin.read_line(&mut buffer)?;
-                let trimmed = buffer.trim();
-                let output = std::process::Command::new("systemd-analyze")
-                    .args(["timespan", trimmed])
-                    .output()?
-                    .stdout;
-                let mut output = std::str::from_utf8(&output)?.to_string();
+
                 loop {
-                    if output.trim().is_empty() {
-                        print!("{}", Fg(Yellow));
-                        print!("Parse error. Enter again > ");
-                        print!("{}", Fg(Reset));
-                        stdout.flush()?;
-                        let mut buffer = String::new();
-                        stdin.read_line(&mut buffer)?;
-                        let trimmed = buffer.trim();
-                        let re_output = std::process::Command::new("systemd-analyze")
-                            .args(["timespan", trimmed])
-                            .output()?
-                            .stdout;
-                        output = std::str::from_utf8(&re_output)?.to_string();
-                        continue;
-                    } else {
-                        break;
+                    let mut buffer = String::new();
+                    stdin.read_line(&mut buffer)?;
+                    let trimmed = buffer.trim();
+                    let output = std::process::Command::new("systemd-analyze")
+                        .args(["timespan", trimmed])
+                        .output()?
+                        .stdout;
+                    let mut output = std::str::from_utf8(&output)?.to_string();
+                    loop {
+                        if output.trim().is_empty() {
+                            print!("{}", Fg(Yellow));
+                            print!("Parse error. Enter again > ");
+                            print!("{}", Fg(Reset));
+                            stdout.flush()?;
+                            let mut buffer = String::new();
+                            stdin.read_line(&mut buffer)?;
+                            let trimmed = buffer.trim();
+                            let re_output = std::process::Command::new("systemd-analyze")
+                                .args(["timespan", trimmed])
+                                .output()?
+                                .stdout;
+                            output = std::str::from_utf8(&re_output)?.to_string();
+                            continue;
+                        } else {
+                            break;
+                        }
                     }
-                }
 
-                let mut timespan = output.clone();
+                    print!("{}", Fg(Green));
+                    println!("-------------------");
+                    print!("{output}");
+                    println!("-------------------");
+                    print!("{}", Fg(Yellow));
+                    print!("OK? [Y/n] ");
+                    print!("{}", Fg(Reset));
+                    stdout.flush()?;
 
-                print!("{}", Fg(Green));
-                println!("-------------------");
-                print!("{output}");
-                println!("-------------------");
-                print!("{}", Fg(Yellow));
-                print!("OK? [Y/n] ");
-                print!("{}", Fg(Reset));
-                stdout.flush()?;
-                stdout.activate_raw_mode()?;
-
-                loop {
+                    stdout.activate_raw_mode()?;
                     let input = keys.next();
-                    if let Some(Ok(input)) = input {
-                        match input {
+                    if let Some(Ok(key)) = input {
+                        match key {
                             Key::Char('\n') | Key::Char('y') | Key::Char('Y') => {
                                 print!("{}", cursor::Left(100));
                                 println!();
+                                timespan = output.clone();
                                 break;
                             }
                             _ => {
                                 print!("{}", cursor::Left(100));
+                                print!("{}", Fg(Yellow));
                                 println!();
+                                print!("Enter again > ");
                                 stdout.suspend_raw_mode()?;
-                                print!("{}", Fg(Yellow));
-                                match i {
-                                    1 => print!("OnActiveSec > "),
-                                    2 => print!("OnBootSec > "),
-                                    3 => print!("OnStartupSec > "),
-                                    4 => print!("OnUnitActiveSec > "),
-                                    5 => print!("OnUnitInactiveSec > "),
-                                    _ => continue,
-                                }
                                 print!("{}", Fg(Reset));
                                 stdout.flush()?;
-                                let mut buffer = String::new();
-                                stdin.read_line(&mut buffer)?;
-                                let output = std::process::Command::new("systemd-analyze")
-                                    .args(["timespan", &buffer])
-                                    .output()?
-                                    .stdout;
-                                let mut output = std::str::from_utf8(&output)?.to_string();
-                                loop {
-                                    if output.trim().is_empty() {
-                                        print!("{}", Fg(Yellow));
-                                        print!("Parse error. Enter again > ");
-                                        print!("{}", Fg(Reset));
-                                        stdout.flush()?;
-                                        let mut buffer = String::new();
-                                        stdin.read_line(&mut buffer)?;
-                                        let trimmed = buffer.trim();
-                                        let re_output =
-                                            std::process::Command::new("systemd-analyze")
-                                                .args(["timespan", trimmed])
-                                                .output()?
-                                                .stdout;
-                                        output = std::str::from_utf8(&re_output)?.to_string();
-                                        continue;
-                                    } else {
-                                        break;
-                                    }
-                                }
-                                timespan = output.clone();
-
-                                print!("{}", Fg(Green));
-                                println!("-------------------");
-                                print!("{output}");
-                                println!("-------------------");
-                                print!("{}", Fg(Yellow));
-                                print!("OK? [Y/n] ");
-                                print!("{}", Fg(Reset));
-                                stdout.flush()?;
-                                stdout.activate_raw_mode()?;
+                                continue;
                             }
                         }
                     }
@@ -439,12 +395,13 @@ pub fn run() -> Result<(), MyError> {
     }
     stdout.suspend_raw_mode()?;
     println!();
-    print!("{}", Fg(Magenta));
+    print!("{}{}", Fg(Magenta), style::Bold);
     println!("RESULT:");
     println!("++++++++++++++++++++");
     println!("{}", to_timer(state));
     println!("++++++++++++++++++++");
-    print!("{}", Fg(Reset));
+    println!();
+    print!("{}{}", Fg(Reset), style::Reset);
     println!("For more details, see systemd.timer(5) and systemd.timer(7).");
     print!("{}", cursor::Show);
     Ok(())
