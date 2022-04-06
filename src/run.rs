@@ -2,6 +2,7 @@ use crate::functions::*;
 
 use super::errors::MyError;
 use super::functions::input_to_numvec;
+use super::messeages::*;
 use super::state::*;
 use std::io::stdout;
 use std::io::Write;
@@ -18,7 +19,12 @@ pub fn run() -> Result<(), MyError> {
     print!("{}", cursor::Hide);
 
     stdout.suspend_raw_mode()?;
-    print!("{}description > {}{}", Fg(Yellow), cursor::Show, Fg(Reset));
+    print!("{}", Fg(Blue));
+    println!("{WELCOME}");
+    println!("{ENTER_DESC}");
+    print!("{}", Fg(Reset));
+
+    print!("{}Description > {}{}", Fg(Yellow), cursor::Show, Fg(Reset));
     stdout.flush()?;
 
     let mut buffer = String::new();
@@ -29,13 +35,11 @@ pub fn run() -> Result<(), MyError> {
     println!();
 
     print!("{}", Fg(Blue));
-    println!(
-        "systemd timers are difined as one of two types:\nMonotonic timers activate after a time span relative to a varying starting point.\nRealtime timers activate on a calendar event, the same way that cronjobs do."
-    );
+    println!("{TIMER_KIND}");
     print!("{}", Fg(Reset));
 
     print!("{}", Fg(Yellow));
-    println!("Which kind of timer do you want?");
+    println!("{ENTER_KIND}");
     print!("{}", Fg(Reset));
     print!("{}", cursor::Left(33));
 
@@ -91,22 +95,18 @@ pub fn run() -> Result<(), MyError> {
     match state.timer_kind {
         Kind::Monotonic => {
             print!("{}", Fg(Yellow));
-            println!("Choose kinds of Monotonic timer(i.e. \"1\" or \"2 3 4\"):");
+            println!("{CHOOSE_MONOTONIC_KIND}");
             print!("{}", Fg(Blue));
             print!("{}", cursor::Left(100));
-            println!("1) OnActiveSec: Relative to the mooment the timer unit is activated.");
+            println!("{KIND1}");
             print!("{}", cursor::Left(100));
-            println!("2) OnBootSec: Relative to when the machines was booted up.");
+            println!("{KIND2}");
             print!("{}", cursor::Left(100));
-            println!("3) OnStartupSec: Relative to when the service manager was first started.");
+            println!("{KIND3}");
             print!("{}", cursor::Left(100));
-            println!(
-                "4) OnUnitActiveSec: Relative to when the unit is activating was last activated."
-            );
+            println!("{KIND4}");
             print!("{}", cursor::Left(100));
-            println!(
-                "5) OnUnitInactiveSec: Relative to when the unit is activating was last deactivated."
-            );
+            println!("{KIND5}");
             print!("{}", cursor::Left(100));
             print!("{}", Fg(Reset));
 
@@ -120,7 +120,7 @@ pub fn run() -> Result<(), MyError> {
             loop {
                 if chosen.is_err() {
                     print!("{}", Fg(Yellow));
-                    print!("Parse error. Enter again > ");
+                    print!("{PARSE_ERROR}");
                     print!("{}", Fg(Reset));
                     stdout.flush()?;
                     let mut buffer = String::new();
@@ -135,7 +135,7 @@ pub fn run() -> Result<(), MyError> {
 
             // after this line, one loop should be used
             print!("{}", Fg(Blue));
-            println!("\nEnter the time span for each timer.\nExample: \"50\" for OnBootSec means 50s after boot-up. \nThe argument may also include time units.\nAnother example: \"5h 30min\" for OnBootSec means 5 hours and 30 minutes after boot-up.\nFor details about the syntax of time spans, see systemd.time(7).");
+            println!("{ENTER_SPAN}");
             print!("{}", Fg(Reset));
 
             let mut monotonic_vec: Vec<(MonotonicKind, String)> = vec![];
@@ -167,7 +167,7 @@ pub fn run() -> Result<(), MyError> {
                     loop {
                         if output.trim().is_empty() {
                             print!("{}", Fg(Yellow));
-                            print!("Parse error. Enter again > ");
+                            print!("{PARSE_ERROR}");
                             print!("{}", Fg(Reset));
                             stdout.flush()?;
                             let mut buffer = String::new();
@@ -189,7 +189,7 @@ pub fn run() -> Result<(), MyError> {
                     print!("{output}");
                     println!("-------------------");
                     print!("{}", Fg(Yellow));
-                    print!("OK? [Y/n] ");
+                    print!("{OK_YN}");
                     print!("{}", Fg(Reset));
                     stdout.flush()?;
 
@@ -207,7 +207,7 @@ pub fn run() -> Result<(), MyError> {
                                 print!("{}", cursor::Left(100));
                                 print!("{}", Fg(Yellow));
                                 println!();
-                                print!("Enter again > ");
+                                print!("{ENTER_AGAIN}");
                                 stdout.suspend_raw_mode()?;
                                 print!("{}", Fg(Reset));
                                 stdout.flush()?;
@@ -234,12 +234,12 @@ pub fn run() -> Result<(), MyError> {
             print!("{}", cursor::Show);
 
             print!("{}", Fg(Yellow));
-            println!("Do you want the interactive input for time spec? [y/N]");
-            print!("{}", cursor::Left(100));
+            print!("{IS_INTERACTIVE}");
             print!("{}", Fg(Reset));
             stdout.flush()?;
 
             let mut is_interactive = false;
+            stdout.activate_raw_mode()?;
             loop {
                 let input = keys.next();
                 if let Some(Ok(input)) = input {
@@ -254,6 +254,7 @@ pub fn run() -> Result<(), MyError> {
                     }
                 }
             }
+            stdout.suspend_raw_mode()?;
 
             println!();
 
@@ -266,7 +267,6 @@ pub fn run() -> Result<(), MyError> {
                     time: "".to_string(),
                 };
 
-                stdout.suspend_raw_mode()?;
                 print!("{}", cursor::Show);
 
                 print!("{}", Fg(Yellow));
@@ -284,19 +284,19 @@ pub fn run() -> Result<(), MyError> {
                 print!("{}", Fg(Reset));
                 let mut buffer = String::new();
                 stdin.read_line(&mut buffer)?;
-                let mut parsed = to_year(buffer.clone());
+                let mut parsed_year = to_year(buffer.clone());
                 loop {
-                    if parsed.is_err() {
-                        println!("Parse error. Enter again > ");
+                    if parsed_year.is_err() {
+                        println!("Parse error: Enter again. > ");
                         let mut buffer = String::new();
                         stdin.read_line(&mut buffer)?;
-                        parsed = to_year(buffer);
+                        parsed_year = to_year(buffer);
                         continue;
                     } else {
                         break;
                     }
                 }
-                format.year = parsed?;
+                format.year = parsed_year?;
 
                 print!("{}", Fg(Yellow));
                 println!("3. Month:");
@@ -304,7 +304,19 @@ pub fn run() -> Result<(), MyError> {
                 print!("{}", Fg(Reset));
                 let mut buffer = String::new();
                 stdin.read_line(&mut buffer)?;
-                format.month = to_monthday(buffer)?;
+                let mut parsed_month = to_monthday(buffer.clone());
+                loop {
+                    if parsed_month.is_err() {
+                        println!("Parse error. Enter again > ");
+                        let mut buffer = String::new();
+                        stdin.read_line(&mut buffer)?;
+                        parsed_month = to_monthday(buffer);
+                        continue;
+                    } else {
+                        break;
+                    }
+                }
+                format.month = parsed_month?;
 
                 print!("{}", Fg(Yellow));
                 println!("4. Day:");
@@ -312,7 +324,19 @@ pub fn run() -> Result<(), MyError> {
                 print!("{}", Fg(Reset));
                 let mut buffer = String::new();
                 stdin.read_line(&mut buffer)?;
-                format.day = to_monthday(buffer)?;
+                let mut parsed_day = to_monthday(buffer.clone());
+                loop {
+                    if parsed_day.is_err() {
+                        println!("Parse error. Enter again > ");
+                        let mut buffer = String::new();
+                        stdin.read_line(&mut buffer)?;
+                        parsed_day = to_monthday(buffer);
+                        continue;
+                    } else {
+                        break;
+                    }
+                }
+                format.day = parsed_day?;
 
                 print!("{}", Fg(Yellow));
                 println!("5. Time:");
@@ -320,7 +344,19 @@ pub fn run() -> Result<(), MyError> {
                 print!("{}", Fg(Reset));
                 let mut buffer = String::new();
                 stdin.read_line(&mut buffer)?;
-                format.time = to_time(buffer).unwrap();
+                let mut parsed_time = to_time(buffer);
+                loop {
+                    if parsed_time.is_err() {
+                        println!("Parse error. Enter again > ");
+                        let mut buffer = String::new();
+                        stdin.read_line(&mut buffer)?;
+                        parsed_time = to_time(buffer);
+                        continue;
+                    } else {
+                        break;
+                    }
+                }
+                format.time = parsed_time?;
 
                 let formatted = format_to_calendar(format);
                 let output = std::process::Command::new("systemd-analyze")
@@ -330,65 +366,78 @@ pub fn run() -> Result<(), MyError> {
                 let output = std::str::from_utf8(&output)?.to_string();
                 if output != *"" {
                     state.calendar = Some(to_normalized(output));
+                } else {
+                    println!("Error occured. Please try again.");
                 }
             } else {
                 stdout.suspend_raw_mode()?;
                 print!("{}", cursor::Show);
                 print!("Enter the time spec > ");
-
                 stdout.flush()?;
 
                 let mut timespec = String::new();
-                let mut buffer = String::new();
-                stdin.read_line(&mut buffer)?;
-                let trimmed = buffer.trim();
-                let output = std::process::Command::new("systemd-analyze")
-                    .args(["calendar", trimmed])
-                    .output()?
-                    .stdout;
-                let output = std::str::from_utf8(&output)?.to_string();
-                timespec = output;
-
-                stdout.flush()?;
-                stdout.activate_raw_mode()?;
 
                 loop {
+                    let mut buffer = String::new();
+                    stdin.read_line(&mut buffer)?;
+                    let trimmed = buffer.trim();
+                    let output = std::process::Command::new("systemd-analyze")
+                        .args(["calendar", trimmed])
+                        .output()?
+                        .stdout;
+                    let mut output = std::str::from_utf8(&output)?.to_string();
+                    loop {
+                        if output.trim().is_empty() {
+                            print!("{}", Fg(Yellow));
+                            print!("Parse error. Enter again > ");
+                            print!("{}", Fg(Reset));
+                            stdout.flush()?;
+                            let mut buffer = String::new();
+                            stdin.read_line(&mut buffer)?;
+                            let trimmed = buffer.trim();
+                            let re_output = std::process::Command::new("systemd-analyze")
+                                .args(["calendar", trimmed])
+                                .output()?
+                                .stdout;
+                            output = std::str::from_utf8(&re_output)?.to_string();
+                            continue;
+                        } else {
+                            break;
+                        }
+                    }
+
+                    print!("{}", Fg(Green));
+                    println!("-------------------------------------------");
+                    print!("{output}");
+                    println!("-------------------------------------------");
+                    print!("{}", Fg(Yellow));
+                    print!("OK? [Y/n] ");
+                    print!("{}", Fg(Reset));
+                    stdout.flush()?;
+
+                    stdout.activate_raw_mode()?;
                     let input = keys.next();
-                    if let Some(Ok(input)) = input {
-                        match input {
-                            Key::Char('\n') => {
+                    if let Some(Ok(key)) = input {
+                        match key {
+                            Key::Char('\n') | Key::Char('y') | Key::Char('Y') => {
                                 print!("{}", cursor::Left(100));
                                 println!();
+                                timespec = output.clone();
                                 break;
                             }
                             _ => {
                                 print!("{}", cursor::Left(100));
+                                print!("{}", Fg(Yellow));
                                 println!();
-                                print!("Enter the time spec > ");
-
+                                print!("Enter again > ");
                                 stdout.suspend_raw_mode()?;
-                                print!("{}", cursor::Show);
+                                print!("{}", Fg(Reset));
                                 stdout.flush()?;
-
-                                let mut buffer = String::new();
-                                stdin.read_line(&mut buffer)?;
-                                let trimmed = buffer.trim();
-                                let output = std::process::Command::new("systemd-analyze")
-                                    .args(["calendar", trimmed])
-                                    .output()?
-                                    .stdout;
-                                let output = std::str::from_utf8(&output)?.to_string();
-                                timespec = output.clone();
-
-                                print!("{output}");
-                                print!("OK? [Y/n] ");
-                                stdout.flush()?;
-                                stdout.activate_raw_mode()?;
+                                continue;
                             }
                         }
                     }
                 }
-
                 state.calendar = Some(to_normalized(timespec));
             }
         }
@@ -402,7 +451,7 @@ pub fn run() -> Result<(), MyError> {
     println!("++++++++++++++++++++");
     println!();
     print!("{}{}", Fg(Reset), style::Reset);
-    println!("For more details, see systemd.timer(5) and systemd.timer(7).");
+    println!("For more details, see systemd.timer(5) and systemd.time(7).");
     print!("{}", cursor::Show);
     Ok(())
 }
