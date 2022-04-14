@@ -29,7 +29,7 @@ pub const MORE_DETAIL: &str = "For more details, see systemd.timer(5) and system
 pub const MONOTONIC_KIND: &str = "                     (Relative to)
 1 OnActiveSec        the moment the timer unit is activated
 2 OnBootSec          when the machines was booted up
-3 OnStartupSec          when the service manager was first started
+3 OnStartupSec       when the service manager was first started
 4 OnUnitActiveSec    when the unit is activating was last activated
 5 OnUnitInactiveSec  when the unit is activating was last deactivated";
 
